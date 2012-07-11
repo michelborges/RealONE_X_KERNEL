@@ -49,28 +49,10 @@ obj-$(CONFIG_ARM_EXYNOS_CPUFREQ)	+= exynos-cpufreq.o
 obj-$(CONFIG_ARM_EXYNOS4210_CPUFREQ)	+= exynos4210-cpufreq.o
 obj-$(CONFIG_ARM_EXYNOS4X12_CPUFREQ)	+= exynos4x12-cpufreq.o
 obj-$(CONFIG_ARM_EXYNOS5250_CPUFREQ)	+= exynos5250-cpufreq.o
-<<<<<<< HEAD
 obj-$(CONFIG_ARM_OMAP2PLUS_CPUFREQ)     += omap-cpufreq.o
-=======
-obj-$(CONFIG_ARM_EXYNOS5440_CPUFREQ)	+= exynos5440-cpufreq.o
-obj-$(CONFIG_ARM_HIGHBANK_CPUFREQ)	+= highbank-cpufreq.o
-obj-$(CONFIG_ARM_IMX6Q_CPUFREQ)		+= imx6q-cpufreq.o
-obj-$(CONFIG_ARM_INTEGRATOR)		+= integrator-cpufreq.o
-obj-$(CONFIG_ARM_KIRKWOOD_CPUFREQ)	+= kirkwood-cpufreq.o
-obj-$(CONFIG_ARM_OMAP2PLUS_CPUFREQ)	+= omap-cpufreq.o
-obj-$(CONFIG_PXA25x)			+= pxa2xx-cpufreq.o
-obj-$(CONFIG_PXA27x)			+= pxa2xx-cpufreq.o
-obj-$(CONFIG_PXA3xx)			+= pxa3xx-cpufreq.o
-obj-$(CONFIG_ARM_S3C2416_CPUFREQ)	+= s3c2416-cpufreq.o
-obj-$(CONFIG_ARM_S3C64XX_CPUFREQ)	+= s3c64xx-cpufreq.o
-obj-$(CONFIG_ARM_S5PV210_CPUFREQ)	+= s5pv210-cpufreq.o
-obj-$(CONFIG_ARM_SA1100_CPUFREQ)	+= sa1100-cpufreq.o
-obj-$(CONFIG_ARM_SA1110_CPUFREQ)	+= sa1110-cpufreq.o
-obj-$(CONFIG_ARM_SPEAR_CPUFREQ)		+= spear-cpufreq.o
-obj-$(CONFIG_CPU_FREQ_MSM)		+= qcom-cpufreq.o
 obj-$(CONFIG_ARM_TEGRA20_CPUFREQ)	+= tegra20-cpufreq.o
-obj-$(CONFIG_ARM_TEGRA124_CPUFREQ)	+= tegra124-cpufreq.o
-obj-$(CONFIG_ARM_TEGRA210_CPUFREQ)	+= tegra210-cpufreq.o
+obj-$(CONFIG_ARM_TEGRA124_CPUFREQ)      += tegra124-cpufreq.o
+obj-$(CONFIG_ARM_TEGRA210_CPUFREQ)      += tegra210-cpufreq.o
 
 ##################################################################################
 # PowerPC platform drivers
