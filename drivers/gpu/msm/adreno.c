@@ -1746,8 +1746,12 @@ static int adreno_of_get_pdata(struct platform_device *pdev)
 	pdata->strtstp_sleepwake = of_property_read_bool(pdev->dev.of_node,
 						"qcom,strtstp-sleepwake");
 
+	pdata->strtstp_sleepwake = of_property_read_bool(pdev->dev.of_node,
+						"qcom,strtstp-sleepwake");
+
 	pdata->bus_control = of_property_read_bool(pdev->dev.of_node,
 					"qcom,bus-control");
+
 
 	if (adreno_of_read_property(pdev->dev.of_node, "qcom,clk-map",
 		&pdata->clk_map))
