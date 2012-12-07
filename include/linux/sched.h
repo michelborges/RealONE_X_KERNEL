@@ -834,6 +834,7 @@ enum cpu_idle_type {
 };
 
 /*
+<<<<<<< HEAD
  * Increase resolution of nice-level calculations for 64-bit architectures.
  * The extra resolution improves shares distribution and load balancing of
  * low-weight task groups (eg. nice +19 on an autogroup), deeper taskgroup
@@ -859,7 +860,7 @@ enum cpu_idle_type {
 #define SCHED_LOAD_SCALE	(1L << SCHED_LOAD_SHIFT)
 
 /*
- * Increase resolution of cpu_power calculations
+ * Increase resolution of cpu_power and rq->util calculations
  */
 #define SCHED_POWER_SHIFT	10
 #define SCHED_POWER_SCALE	(1L << SCHED_POWER_SHIFT)
