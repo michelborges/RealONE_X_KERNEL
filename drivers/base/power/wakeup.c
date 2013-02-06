@@ -380,6 +380,22 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 {
 	unsigned int cec;
 
+<<<<<<< HEAD
+=======
+	if (suspend_marker_entry) {
+		split_counters(&cnt, &inpr);
+		if (cnt == saved_count && inpr == 0) {
+			wakeup_pending = false;
+		}
+	}
+#endif
+
+	/*
+	 * active wakeup source should bring the system
+	 * out of PM_SUSPEND_FREEZE state
+	 */
+	freeze_wake();
+
 	ws->active = true;
 	ws->active_count++;
 	ws->last_time = ktime_get();
