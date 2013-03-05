@@ -7988,7 +7988,7 @@ unlock:
 	return err;
 }
 
-int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
+static int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
 {
 	u64 rt_runtime, rt_period;
 
@@ -8000,7 +8000,7 @@ int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
 	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
 }
 
-long sched_group_rt_runtime(struct task_group *tg)
+static long sched_group_rt_runtime(struct task_group *tg)
 {
 	u64 rt_runtime_us;
 
@@ -8012,7 +8012,7 @@ long sched_group_rt_runtime(struct task_group *tg)
 	return rt_runtime_us;
 }
 
-int sched_group_set_rt_period(struct task_group *tg, long rt_period_us)
+static int sched_group_set_rt_period(struct task_group *tg, long rt_period_us)
 {
 	u64 rt_runtime, rt_period;
 
@@ -8025,7 +8025,7 @@ int sched_group_set_rt_period(struct task_group *tg, long rt_period_us)
 	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
 }
 
-long sched_group_rt_period(struct task_group *tg)
+static long sched_group_rt_period(struct task_group *tg)
 {
 	u64 rt_period_us;
 
@@ -8060,7 +8060,7 @@ static int sched_rt_global_constraints(void)
 	return ret;
 }
 
-int sched_rt_can_attach(struct task_group *tg, struct task_struct *tsk)
+static int sched_rt_can_attach(struct task_group *tg, struct task_struct *tsk)
 {
 	/* Don't accept realtime tasks when there is no way for them to run */
 	if (rt_task(tsk) && tg->rt_bandwidth.rt_runtime == 0)
