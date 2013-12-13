@@ -317,6 +317,12 @@ const_debug int sysctl_sched_yield_sleep_threshold = 4;
 const_debug unsigned int sysctl_sched_yield_sleep_duration = 50;
 
 /*
+ * Maximum possible frequency across all cpus. Task demand and cpu
+ * capacity (cpu_power) metrics could be scaled in reference to it.
+ */
+static unsigned int max_possible_freq = 1;
+
+/*
  * __task_rq_lock - lock the rq @p resides on.
  */
 static inline struct rq *__task_rq_lock(struct task_struct *p)
