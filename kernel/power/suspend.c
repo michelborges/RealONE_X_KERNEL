@@ -30,7 +30,6 @@
 
 #include "power.h"
 
-<<<<<<< HEAD
 static void suspend_timeout(unsigned long data);
 static DEFINE_TIMER(suspend_wd, suspend_timeout, 0, 0);
 
@@ -433,6 +432,17 @@ static int enter_state(suspend_state_t state)
 	sys_sync();
 	printk("done.\n");
 
+#ifdef CONFIG_HAS_EARLYSUSPEND
+	if (suspendsync)
+		suspend_sys_sync_queue();
+#else
+	if (suspendsync) {
+		printk(KERN_INFO "PM: Syncing filesystems ... ");
+		sys_sync();
+		printk("done.\n");
+	}
+#endif
+
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state].label);
 	error = suspend_prepare(state);
 	if (error)
@@ -500,5 +510,4 @@ static int __init suspendsync_setup(char *str)
 	suspendsync = simple_strtoul(str, NULL, 0);
 	return 1;
 }
-
 __setup("suspendsync=", suspendsync_setup);

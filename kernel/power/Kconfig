@@ -301,7 +301,7 @@ config SUSPEND_TIME
 config PM_SYNC_BEFORE_SUSPEND
 	bool "Sync file systems before suspend"
 	depends on PM
-	default y
+	default n
 
 config SUSPEND_TIME_TIMEKEEPING
 	bool "get suspend time from timekeeping"
@@ -317,3 +317,6 @@ config QUICK_WAKEUP
 	---help---
 	  Allow kernel driver to do periodic jobs without resuming the full system
 	  This option can increase battery life on android powered smartphone.
+=======
+	default n
+>>>>>>> f738ea1... power: make sync on suspend optional
