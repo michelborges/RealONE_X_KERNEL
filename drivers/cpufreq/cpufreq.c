@@ -574,17 +574,19 @@ int cpufreq_qos_requirement(unsigned int kHz)
 		if (kHz == INT_MAX)
 			kHz = new_policy.cpuinfo.max_freq;
 
+		if (new_policy.min > kHz)
+			goto out;
+
 		pr_info("%s: CPU0 min: %u->%u kHz\n", __func__, new_policy.min, kHz);
 
 		last_min_freq = new_policy.min;
 		new_policy.min = kHz;
-
 		cpufreq_required = 1;
 	} else if (last_min_freq && cpufreq_required) {
 		pr_info("%s: CPU0 min: %u->%u kHz\n", __func__, new_policy.min, last_min_freq);
 
-		cpufreq_required = 0;
 		new_policy.min = last_min_freq;
+		cpufreq_required = 0;
 	} else {
 		goto out;
 	}
@@ -596,6 +598,7 @@ int cpufreq_qos_requirement(unsigned int kHz)
 
 out:
 	mutex_unlock(&cpufreq_qos_lock);
+
 	return ret;
 }
 EXPORT_SYMBOL(cpufreq_qos_requirement);
