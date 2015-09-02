@@ -14,8 +14,13 @@
 #include <linux/blkdev.h>
 #include <linux/prefetch.h>
 #include <linux/kthread.h>
+<<<<<<< HEAD
 #include <linux/swap.h>
 #include <linux/timer.h>
+=======
+#include <linux/vmalloc.h>
+#include <linux/swap.h>
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 #include "f2fs.h"
 #include "segment.h"
@@ -355,7 +360,11 @@ void f2fs_balance_fs(struct f2fs_sb_info *sbi)
 	 */
 	if (has_not_enough_free_secs(sbi, 0)) {
 		mutex_lock(&sbi->gc_mutex);
+<<<<<<< HEAD
 		f2fs_gc(sbi, false);
+=======
+		f2fs_gc(sbi);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	}
 }
 
@@ -375,8 +384,12 @@ void f2fs_balance_fs_bg(struct f2fs_sb_info *sbi)
 	/* checkpoint is the only way to shrink partial cached entries */
 	if (!available_free_memory(sbi, NAT_ENTRIES) ||
 			excess_prefree_segs(sbi) ||
+<<<<<<< HEAD
 			!available_free_memory(sbi, INO_ENTRIES) ||
 			jiffies > sbi->cp_expires)
+=======
+			!available_free_memory(sbi, INO_ENTRIES))
+>>>>>>> 26b3c82... msm8974: add f2fs
 		f2fs_sync_fs(sbi->sb, true);
 }
 
@@ -854,6 +867,7 @@ void invalidate_blocks(struct f2fs_sb_info *sbi, block_t addr)
 	mutex_unlock(&sit_i->sentry_lock);
 }
 
+<<<<<<< HEAD
 bool is_checkpointed_data(struct f2fs_sb_info *sbi, block_t blkaddr)
 {
 	struct sit_info *sit_i = SIT_I(sbi);
@@ -878,6 +892,8 @@ bool is_checkpointed_data(struct f2fs_sb_info *sbi, block_t blkaddr)
 	return is_cp;
 }
 
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 /*
  * This function should be resided under the curseg_mutex lock
  */
@@ -1480,6 +1496,7 @@ static void __f2fs_replace_block(struct f2fs_sb_info *sbi,
 	curseg->next_blkoff = GET_BLKOFF_FROM_SEG0(sbi, new_blkaddr);
 	__add_sum_entry(sbi, type, sum);
 
+<<<<<<< HEAD
 	if (!recover_curseg)
 		update_sit_entry(sbi, new_blkaddr, 1);
 	if (GET_SEGNO(sbi, old_blkaddr) != NULL_SEGNO)
@@ -1488,6 +1505,9 @@ static void __f2fs_replace_block(struct f2fs_sb_info *sbi,
 	locate_dirty_segment(sbi, GET_SEGNO(sbi, old_blkaddr));
 	locate_dirty_segment(sbi, GET_SEGNO(sbi, new_blkaddr));
 
+=======
+	refresh_sit_entry(sbi, old_blkaddr, new_blkaddr);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	locate_dirty_segment(sbi, old_cursegno);
 
 	if (recover_curseg) {
@@ -2073,13 +2093,21 @@ static int build_sit_info(struct f2fs_sb_info *sbi)
 
 	SM_I(sbi)->sit_info = sit_i;
 
+<<<<<<< HEAD
 	sit_i->sentries = f2fs_kvzalloc(MAIN_SEGS(sbi) *
 					sizeof(struct seg_entry), GFP_KERNEL);
+=======
+	sit_i->sentries = vzalloc(MAIN_SEGS(sbi) * sizeof(struct seg_entry));
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (!sit_i->sentries)
 		return -ENOMEM;
 
 	bitmap_size = f2fs_bitmap_size(MAIN_SEGS(sbi));
+<<<<<<< HEAD
 	sit_i->dirty_sentries_bitmap = f2fs_kvzalloc(bitmap_size, GFP_KERNEL);
+=======
+	sit_i->dirty_sentries_bitmap = kzalloc(bitmap_size, GFP_KERNEL);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (!sit_i->dirty_sentries_bitmap)
 		return -ENOMEM;
 
@@ -2101,8 +2129,13 @@ static int build_sit_info(struct f2fs_sb_info *sbi)
 		return -ENOMEM;
 
 	if (sbi->segs_per_sec > 1) {
+<<<<<<< HEAD
 		sit_i->sec_entries = f2fs_kvzalloc(MAIN_SECS(sbi) *
 					sizeof(struct sec_entry), GFP_KERNEL);
+=======
+		sit_i->sec_entries = vzalloc(MAIN_SECS(sbi) *
+					sizeof(struct sec_entry));
+>>>>>>> 26b3c82... msm8974: add f2fs
 		if (!sit_i->sec_entries)
 			return -ENOMEM;
 	}
@@ -2147,12 +2180,20 @@ static int build_free_segmap(struct f2fs_sb_info *sbi)
 	SM_I(sbi)->free_info = free_i;
 
 	bitmap_size = f2fs_bitmap_size(MAIN_SEGS(sbi));
+<<<<<<< HEAD
 	free_i->free_segmap = f2fs_kvmalloc(bitmap_size, GFP_KERNEL);
+=======
+	free_i->free_segmap = kmalloc(bitmap_size, GFP_KERNEL);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (!free_i->free_segmap)
 		return -ENOMEM;
 
 	sec_bitmap_size = f2fs_bitmap_size(MAIN_SECS(sbi));
+<<<<<<< HEAD
 	free_i->free_secmap = f2fs_kvmalloc(sec_bitmap_size, GFP_KERNEL);
+=======
+	free_i->free_secmap = kmalloc(sec_bitmap_size, GFP_KERNEL);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (!free_i->free_secmap)
 		return -ENOMEM;
 
@@ -2293,7 +2334,11 @@ static int init_victim_secmap(struct f2fs_sb_info *sbi)
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	unsigned int bitmap_size = f2fs_bitmap_size(MAIN_SECS(sbi));
 
+<<<<<<< HEAD
 	dirty_i->victim_secmap = f2fs_kvzalloc(bitmap_size, GFP_KERNEL);
+=======
+	dirty_i->victim_secmap = kzalloc(bitmap_size, GFP_KERNEL);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (!dirty_i->victim_secmap)
 		return -ENOMEM;
 	return 0;
@@ -2315,7 +2360,11 @@ static int build_dirty_segmap(struct f2fs_sb_info *sbi)
 	bitmap_size = f2fs_bitmap_size(MAIN_SEGS(sbi));
 
 	for (i = 0; i < NR_DIRTY_TYPE; i++) {
+<<<<<<< HEAD
 		dirty_i->dirty_segmap[i] = f2fs_kvzalloc(bitmap_size, GFP_KERNEL);
+=======
+		dirty_i->dirty_segmap[i] = kzalloc(bitmap_size, GFP_KERNEL);
+>>>>>>> 26b3c82... msm8974: add f2fs
 		if (!dirty_i->dirty_segmap[i])
 			return -ENOMEM;
 	}
@@ -2420,7 +2469,11 @@ static void discard_dirty_segmap(struct f2fs_sb_info *sbi,
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 
 	mutex_lock(&dirty_i->seglist_lock);
+<<<<<<< HEAD
 	kvfree(dirty_i->dirty_segmap[dirty_type]);
+=======
+	kfree(dirty_i->dirty_segmap[dirty_type]);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	dirty_i->nr_dirty[dirty_type] = 0;
 	mutex_unlock(&dirty_i->seglist_lock);
 }
@@ -2428,7 +2481,11 @@ static void discard_dirty_segmap(struct f2fs_sb_info *sbi,
 static void destroy_victim_secmap(struct f2fs_sb_info *sbi)
 {
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
+<<<<<<< HEAD
 	kvfree(dirty_i->victim_secmap);
+=======
+	kfree(dirty_i->victim_secmap);
+>>>>>>> 26b3c82... msm8974: add f2fs
 }
 
 static void destroy_dirty_segmap(struct f2fs_sb_info *sbi)
@@ -2467,8 +2524,13 @@ static void destroy_free_segmap(struct f2fs_sb_info *sbi)
 	if (!free_i)
 		return;
 	SM_I(sbi)->free_info = NULL;
+<<<<<<< HEAD
 	kvfree(free_i->free_segmap);
 	kvfree(free_i->free_secmap);
+=======
+	kfree(free_i->free_segmap);
+	kfree(free_i->free_secmap);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	kfree(free_i);
 }
 
@@ -2489,9 +2551,15 @@ static void destroy_sit_info(struct f2fs_sb_info *sbi)
 	}
 	kfree(sit_i->tmp_map);
 
+<<<<<<< HEAD
 	kvfree(sit_i->sentries);
 	kvfree(sit_i->sec_entries);
 	kvfree(sit_i->dirty_sentries_bitmap);
+=======
+	vfree(sit_i->sentries);
+	vfree(sit_i->sec_entries);
+	kfree(sit_i->dirty_sentries_bitmap);
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 	SM_I(sbi)->sit_info = NULL;
 	kfree(sit_i->sit_bitmap);

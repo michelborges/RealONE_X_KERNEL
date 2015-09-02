@@ -1325,6 +1325,7 @@ static int f2fs_write_node_page(struct page *page,
 	nid = nid_of_node(page);
 	f2fs_bug_on(sbi, page->index != nid);
 
+<<<<<<< HEAD
 	if (wbc->for_reclaim) {
 		if (!down_read_trylock(&sbi->node_write))
 			goto redirty_out;
@@ -1332,17 +1333,32 @@ static int f2fs_write_node_page(struct page *page,
 		down_read(&sbi->node_write);
 	}
 
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	get_node_info(sbi, nid, &ni);
 
 	/* This page is already truncated */
 	if (unlikely(ni.blk_addr == NULL_ADDR)) {
 		ClearPageUptodate(page);
 		dec_page_count(sbi, F2FS_DIRTY_NODES);
+<<<<<<< HEAD
 		up_read(&sbi->node_write);
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 		unlock_page(page);
 		return 0;
 	}
 
+<<<<<<< HEAD
+=======
+	if (wbc->for_reclaim) {
+		if (!down_read_trylock(&sbi->node_write))
+			goto redirty_out;
+	} else {
+		down_read(&sbi->node_write);
+	}
+
+>>>>>>> 26b3c82... msm8974: add f2fs
 	set_page_writeback(page);
 	fio.blk_addr = ni.blk_addr;
 	write_node_page(nid, &fio);

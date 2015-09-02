@@ -74,8 +74,12 @@ static int f2fs_vm_page_mkwrite(struct vm_area_struct *vma,
 		goto mapped;
 
 	/* page is wholly or partially inside EOF */
+<<<<<<< HEAD
 	if (((loff_t)(page->index + 1) << PAGE_CACHE_SHIFT) >
 						i_size_read(inode)) {
+=======
+	if (((page->index + 1) << PAGE_CACHE_SHIFT) > i_size_read(inode)) {
+>>>>>>> 26b3c82... msm8974: add f2fs
 		unsigned offset;
 		offset = i_size_read(inode) & ~PAGE_CACHE_MASK;
 		zero_user_segment(page, offset, PAGE_CACHE_SIZE);
@@ -361,7 +365,11 @@ static loff_t f2fs_seek_block(struct file *file, loff_t offset, int whence)
 
 	dirty = __get_first_dirty_index(inode->i_mapping, pgofs, whence);
 
+<<<<<<< HEAD
 	for (; data_ofs < isize; data_ofs = (loff_t)pgofs << PAGE_CACHE_SHIFT) {
+=======
+	for (; data_ofs < isize; data_ofs = pgofs << PAGE_CACHE_SHIFT) {
+>>>>>>> 26b3c82... msm8974: add f2fs
 		set_new_dnode(&dn, inode, NULL, NULL, 0);
 		err = get_dnode_of_data(&dn, pgofs, LOOKUP_NODE_RA);
 		if (err && err != -ENOENT) {
@@ -522,14 +530,22 @@ static int truncate_partial_data_page(struct inode *inode, u64 from,
 		return 0;
 
 	if (cache_only) {
+<<<<<<< HEAD
 		page = f2fs_grab_cache_page(mapping, index, false);
+=======
+		page = grab_cache_page(mapping, index);
+>>>>>>> 26b3c82... msm8974: add f2fs
 		if (page && PageUptodate(page))
 			goto truncate_out;
 		f2fs_put_page(page, 1);
 		return 0;
 	}
 
+<<<<<<< HEAD
 	page = get_lock_data_page(inode, index, true);
+=======
+	page = get_lock_data_page(inode, index);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (IS_ERR(page))
 		return 0;
 truncate_out:
@@ -698,7 +714,10 @@ int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
 			 * larger than i_size.
 			 */
 			truncate_setsize(inode, attr->ia_size);
+<<<<<<< HEAD
 			inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 		}
 	}
 
@@ -756,6 +775,7 @@ static int fill_zero(struct inode *inode, pgoff_t index,
 
 int truncate_hole(struct inode *inode, pgoff_t pg_start, pgoff_t pg_end)
 {
+<<<<<<< HEAD
 	int err;
 
 	while (pg_start < pg_end) {
@@ -781,6 +801,25 @@ int truncate_hole(struct inode *inode, pgoff_t pg_start, pgoff_t pg_end)
 		f2fs_put_dnode(&dn);
 
 		pg_start += count;
+=======
+	pgoff_t index;
+	int err;
+
+	for (index = pg_start; index < pg_end; index++) {
+		struct dnode_of_data dn;
+
+		set_new_dnode(&dn, inode, NULL, NULL, 0);
+		err = get_dnode_of_data(&dn, index, LOOKUP_NODE);
+		if (err) {
+			if (err == -ENOENT)
+				continue;
+			return err;
+		}
+
+		if (dn.data_blkaddr != NULL_ADDR)
+			truncate_data_blocks_range(&dn, 1);
+		f2fs_put_dnode(&dn);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	}
 	return 0;
 }
@@ -791,6 +830,12 @@ static int punch_hole(struct inode *inode, loff_t offset, loff_t len)
 	loff_t off_start, off_end;
 	int ret = 0;
 
+<<<<<<< HEAD
+=======
+	if (!S_ISREG(inode->i_mode))
+		return -EOPNOTSUPP;
+
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (f2fs_has_inline_data(inode)) {
 		ret = f2fs_convert_inline_inode(inode);
 		if (ret)
@@ -828,8 +873,13 @@ static int punch_hole(struct inode *inode, loff_t offset, loff_t len)
 
 			f2fs_balance_fs(sbi);
 
+<<<<<<< HEAD
 			blk_start = (loff_t)pg_start << PAGE_CACHE_SHIFT;
 			blk_end = (loff_t)pg_end << PAGE_CACHE_SHIFT;
+=======
+			blk_start = pg_start << PAGE_CACHE_SHIFT;
+			blk_end = pg_end << PAGE_CACHE_SHIFT;
+>>>>>>> 26b3c82... msm8974: add f2fs
 			truncate_inode_pages_range(mapping, blk_start,
 					blk_end - 1);
 
@@ -842,6 +892,7 @@ static int punch_hole(struct inode *inode, loff_t offset, loff_t len)
 	return ret;
 }
 
+<<<<<<< HEAD
 static int __exchange_data_block(struct inode *inode, pgoff_t src,
 					pgoff_t dst, bool full)
 {
@@ -936,6 +987,88 @@ static int f2fs_do_collapse(struct inode *inode, pgoff_t start, pgoff_t end)
 		if (ret)
 			break;
 	}
+=======
+static int f2fs_do_collapse(struct inode *inode, pgoff_t start, pgoff_t end)
+{
+	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+	struct dnode_of_data dn;
+	pgoff_t nrpages = (i_size_read(inode) + PAGE_SIZE - 1) / PAGE_SIZE;
+	int ret = 0;
+
+	for (; end < nrpages; start++, end++) {
+		block_t new_addr, old_addr;
+
+		f2fs_lock_op(sbi);
+
+		set_new_dnode(&dn, inode, NULL, NULL, 0);
+		ret = get_dnode_of_data(&dn, end, LOOKUP_NODE_RA);
+		if (ret && ret != -ENOENT) {
+			goto out;
+		} else if (ret == -ENOENT) {
+			new_addr = NULL_ADDR;
+		} else {
+			new_addr = dn.data_blkaddr;
+			truncate_data_blocks_range(&dn, 1);
+			f2fs_put_dnode(&dn);
+		}
+
+		if (new_addr == NULL_ADDR) {
+			set_new_dnode(&dn, inode, NULL, NULL, 0);
+			ret = get_dnode_of_data(&dn, start, LOOKUP_NODE_RA);
+			if (ret && ret != -ENOENT) {
+				goto out;
+			} else if (ret == -ENOENT) {
+				f2fs_unlock_op(sbi);
+				continue;
+			}
+
+			if (dn.data_blkaddr == NULL_ADDR) {
+				f2fs_put_dnode(&dn);
+				f2fs_unlock_op(sbi);
+				continue;
+			} else {
+				truncate_data_blocks_range(&dn, 1);
+			}
+
+			f2fs_put_dnode(&dn);
+		} else {
+			struct page *ipage;
+
+			ipage = get_node_page(sbi, inode->i_ino);
+			if (IS_ERR(ipage)) {
+				ret = PTR_ERR(ipage);
+				goto out;
+			}
+
+			set_new_dnode(&dn, inode, ipage, NULL, 0);
+			ret = f2fs_reserve_block(&dn, start);
+			if (ret)
+				goto out;
+
+			old_addr = dn.data_blkaddr;
+			if (old_addr != NEW_ADDR && new_addr == NEW_ADDR) {
+				dn.data_blkaddr = NULL_ADDR;
+				f2fs_update_extent_cache(&dn);
+				invalidate_blocks(sbi, old_addr);
+
+				dn.data_blkaddr = new_addr;
+				set_data_blkaddr(&dn);
+			} else if (new_addr != NEW_ADDR) {
+				struct node_info ni;
+
+				get_node_info(sbi, dn.nid, &ni);
+				f2fs_replace_block(sbi, &dn, old_addr, new_addr,
+							ni.version, true);
+			}
+
+			f2fs_put_dnode(&dn);
+		}
+		f2fs_unlock_op(sbi);
+	}
+	return 0;
+out:
+	f2fs_unlock_op(sbi);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	return ret;
 }
 
@@ -945,6 +1078,12 @@ static int f2fs_collapse_range(struct inode *inode, loff_t offset, loff_t len)
 	loff_t new_size;
 	int ret;
 
+<<<<<<< HEAD
+=======
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
+
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (offset + len >= i_size_read(inode))
 		return -EINVAL;
 
@@ -974,12 +1113,16 @@ static int f2fs_collapse_range(struct inode *inode, loff_t offset, loff_t len)
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	/* write out all moved pages, if possible */
 	filemap_write_and_wait_range(inode->i_mapping, offset, LLONG_MAX);
 	truncate_pagecache(inode, 0, offset);
 
 	new_size = i_size_read(inode) - len;
 	truncate_pagecache(inode, 0, new_size);
+=======
+	new_size = i_size_read(inode) - len;
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 	ret = truncate_blocks(inode, new_size, true);
 	if (!ret)
@@ -998,6 +1141,12 @@ static int f2fs_zero_range(struct inode *inode, loff_t offset, loff_t len,
 	loff_t off_start, off_end;
 	int ret = 0;
 
+<<<<<<< HEAD
+=======
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
+
+>>>>>>> 26b3c82... msm8974: add f2fs
 	ret = inode_newsize_ok(inode, (len + offset));
 	if (ret)
 		return ret;
@@ -1039,7 +1188,11 @@ static int f2fs_zero_range(struct inode *inode, loff_t offset, loff_t len,
 				return ret;
 
 			new_size = max_t(loff_t, new_size,
+<<<<<<< HEAD
 					(loff_t)pg_start << PAGE_CACHE_SHIFT);
+=======
+						pg_start << PAGE_CACHE_SHIFT);
+>>>>>>> 26b3c82... msm8974: add f2fs
 		}
 
 		for (index = pg_start; index < pg_end; index++) {
@@ -1075,7 +1228,11 @@ static int f2fs_zero_range(struct inode *inode, loff_t offset, loff_t len,
 			f2fs_unlock_op(sbi);
 
 			new_size = max_t(loff_t, new_size,
+<<<<<<< HEAD
 				(loff_t)(index + 1) << PAGE_CACHE_SHIFT);
+=======
+					(index + 1) << PAGE_CACHE_SHIFT);
+>>>>>>> 26b3c82... msm8974: add f2fs
 		}
 
 		if (off_end) {
@@ -1102,7 +1259,14 @@ static int f2fs_insert_range(struct inode *inode, loff_t offset, loff_t len)
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
 	pgoff_t pg_start, pg_end, delta, nrpages, idx;
 	loff_t new_size;
+<<<<<<< HEAD
 	int ret = 0;
+=======
+	int ret;
+
+	if (!S_ISREG(inode->i_mode))
+		return -EINVAL;
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 	new_size = i_size_read(inode) + len;
 	if (new_size > inode->i_sb->s_maxbytes)
@@ -1140,6 +1304,7 @@ static int f2fs_insert_range(struct inode *inode, loff_t offset, loff_t len)
 	nrpages = (i_size_read(inode) + PAGE_SIZE - 1) / PAGE_SIZE;
 
 	for (idx = nrpages - 1; idx >= pg_start && idx != -1; idx--) {
+<<<<<<< HEAD
 		f2fs_lock_op(sbi);
 		ret = __exchange_data_block(inode, idx, idx + delta, false);
 		f2fs_unlock_op(sbi);
@@ -1153,6 +1318,59 @@ static int f2fs_insert_range(struct inode *inode, loff_t offset, loff_t len)
 
 	if (!ret)
 		i_size_write(inode, new_size);
+=======
+		struct dnode_of_data dn;
+		struct page *ipage;
+		block_t new_addr, old_addr;
+
+		f2fs_lock_op(sbi);
+
+		set_new_dnode(&dn, inode, NULL, NULL, 0);
+		ret = get_dnode_of_data(&dn, idx, LOOKUP_NODE_RA);
+		if (ret && ret != -ENOENT) {
+			goto out;
+		} else if (ret == -ENOENT) {
+			goto next;
+		} else if (dn.data_blkaddr == NULL_ADDR) {
+			f2fs_put_dnode(&dn);
+			goto next;
+		} else {
+			new_addr = dn.data_blkaddr;
+			truncate_data_blocks_range(&dn, 1);
+			f2fs_put_dnode(&dn);
+		}
+
+		ipage = get_node_page(sbi, inode->i_ino);
+		if (IS_ERR(ipage)) {
+			ret = PTR_ERR(ipage);
+			goto out;
+		}
+
+		set_new_dnode(&dn, inode, ipage, NULL, 0);
+		ret = f2fs_reserve_block(&dn, idx + delta);
+		if (ret)
+			goto out;
+
+		old_addr = dn.data_blkaddr;
+		f2fs_bug_on(sbi, old_addr != NEW_ADDR);
+
+		if (new_addr != NEW_ADDR) {
+			struct node_info ni;
+
+			get_node_info(sbi, dn.nid, &ni);
+			f2fs_replace_block(sbi, &dn, old_addr, new_addr,
+							ni.version, true);
+		}
+		f2fs_put_dnode(&dn);
+next:
+		f2fs_unlock_op(sbi);
+	}
+
+	i_size_write(inode, new_size);
+	return 0;
+out:
+	f2fs_unlock_op(sbi);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	return ret;
 }
 
@@ -1199,10 +1417,16 @@ noalloc:
 		if (pg_start == pg_end)
 			new_size = offset + len;
 		else if (index == pg_start && off_start)
+<<<<<<< HEAD
 			new_size = (loff_t)(index + 1) << PAGE_CACHE_SHIFT;
 		else if (index == pg_end)
 			new_size = ((loff_t)index << PAGE_CACHE_SHIFT) +
 								off_end;
+=======
+			new_size = (index + 1) << PAGE_CACHE_SHIFT;
+		else if (index == pg_end)
+			new_size = (index << PAGE_CACHE_SHIFT) + off_end;
+>>>>>>> 26b3c82... msm8974: add f2fs
 		else
 			new_size += PAGE_CACHE_SIZE;
 	}
@@ -1228,10 +1452,13 @@ static long f2fs_fallocate(struct file *file, int mode,
 	struct inode *inode = file_inode(file);
 	long ret = 0;
 
+<<<<<<< HEAD
 	/* f2fs only support ->fallocate for regular file */
 	if (!S_ISREG(inode->i_mode))
 		return -EINVAL;
 
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (f2fs_encrypted_inode(inode) &&
 		(mode & (FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE)))
 		return -EOPNOTSUPP;
@@ -1441,7 +1668,12 @@ static int f2fs_ioc_release_volatile_write(struct file *filp)
 	if (!f2fs_is_first_block_written(inode))
 		return truncate_partial_data_page(inode, 0, true);
 
+<<<<<<< HEAD
 	return punch_hole(inode, 0, F2FS_BLKSIZE);
+=======
+	punch_hole(inode, 0, F2FS_BLKSIZE);
+	return 0;
+>>>>>>> 26b3c82... msm8974: add f2fs
 }
 
 static int f2fs_ioc_abort_volatile_write(struct file *filp)
@@ -1499,10 +1731,13 @@ static int f2fs_ioc_shutdown(struct file *filp, unsigned long arg)
 	case FS_GOING_DOWN_NOSYNC:
 		f2fs_stop_checkpoint(sbi);
 		break;
+<<<<<<< HEAD
 	case FS_GOING_DOWN_METAFLUSH:
 		sync_meta_pages(sbi, META, LONG_MAX);
 		f2fs_stop_checkpoint(sbi);
 		break;
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	default:
 		return -EINVAL;
 	}
@@ -1623,11 +1858,16 @@ static int f2fs_ioc_gc(struct file *filp, unsigned long arg)
 {
 	struct inode *inode = file_inode(filp);
 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
+<<<<<<< HEAD
 	__u32 sync;
+=======
+	__u32 i, count;
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
+<<<<<<< HEAD
 	if (get_user(sync, (__u32 __user *)arg))
 		return -EFAULT;
 
@@ -1661,6 +1901,24 @@ static int f2fs_ioc_write_checkpoint(struct file *filp, unsigned long arg)
 	mutex_lock(&sbi->gc_mutex);
 	write_checkpoint(sbi, &cpc);
 	mutex_unlock(&sbi->gc_mutex);
+=======
+	if (get_user(count, (__u32 __user *)arg))
+		return -EFAULT;
+
+	if (!count || count > F2FS_BATCH_GC_MAX_NUM)
+		return -EINVAL;
+
+	for (i = 0; i < count; i++) {
+		if (!mutex_trylock(&sbi->gc_mutex))
+			break;
+
+		if (f2fs_gc(sbi))
+			break;
+	}
+
+	if (put_user(i, (__u32 __user *)arg))
+		return -EFAULT;
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 	return 0;
 }
@@ -1696,8 +1954,11 @@ long f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return f2fs_ioc_get_encryption_pwsalt(filp, arg);
 	case F2FS_IOC_GARBAGE_COLLECT:
 		return f2fs_ioc_gc(filp, arg);
+<<<<<<< HEAD
 	case F2FS_IOC_WRITE_CHECKPOINT:
 		return f2fs_ioc_write_checkpoint(filp, arg);
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	default:
 		return -ENOTTY;
 	}

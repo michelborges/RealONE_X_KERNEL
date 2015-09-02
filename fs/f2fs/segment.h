@@ -136,12 +136,19 @@ enum {
 /*
  * BG_GC means the background cleaning job.
  * FG_GC means the on-demand cleaning job.
+<<<<<<< HEAD
  * FORCE_FG_GC means on-demand cleaning job in background.
  */
 enum {
 	BG_GC = 0,
 	FG_GC,
 	FORCE_FG_GC,
+=======
+ */
+enum {
+	BG_GC = 0,
+	FG_GC
+>>>>>>> 26b3c82... msm8974: add f2fs
 };
 
 /* for a function parameter to select a victim segment */

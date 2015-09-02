@@ -77,11 +77,16 @@ static int gc_thread_func(void *data)
 
 		stat_inc_bggc_count(sbi);
 
+<<<<<<< HEAD
 		trace_f2fs_background_gc(sbi->sb, wait_ms,
 				prefree_segments(sbi), free_segments(sbi));
 
 		/* if return value is not zero, no victim was selected */
 		if (f2fs_gc(sbi, test_opt(sbi, FORCE_FG_GC)))
+=======
+		/* if return value is not zero, no victim was selected */
+		if (f2fs_gc(sbi))
+>>>>>>> 26b3c82... msm8974: add f2fs
 			wait_ms = gc_th->no_gc_sleep_time;
 
 		/* balancing f2fs's metadata periodically */
@@ -260,7 +265,10 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 	struct dirty_seglist_info *dirty_i = DIRTY_I(sbi);
 	struct victim_sel_policy p;
 	unsigned int secno, max_cost;
+<<<<<<< HEAD
 	unsigned int last_segment = MAIN_SEGS(sbi);
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	int nsearched = 0;
 
 	mutex_lock(&dirty_i->seglist_lock);
@@ -271,9 +279,12 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 	p.min_segno = NULL_SEGNO;
 	p.min_cost = max_cost = get_max_cost(sbi, &p);
 
+<<<<<<< HEAD
 	if (p.max_search == 0)
 		goto out;
 
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (p.alloc_mode == LFS && gc_type == FG_GC) {
 		p.min_segno = check_bg_victims(sbi);
 		if (p.min_segno != NULL_SEGNO)
@@ -284,10 +295,16 @@ static int get_victim_by_default(struct f2fs_sb_info *sbi,
 		unsigned long cost;
 		unsigned int segno;
 
+<<<<<<< HEAD
 		segno = find_next_bit(p.dirty_segmap, last_segment, p.offset);
 		if (segno >= last_segment) {
 			if (sbi->last_victim[p.gc_mode]) {
 				last_segment = sbi->last_victim[p.gc_mode];
+=======
+		segno = find_next_bit(p.dirty_segmap, MAIN_SEGS(sbi), p.offset);
+		if (segno >= MAIN_SEGS(sbi)) {
+			if (sbi->last_victim[p.gc_mode]) {
+>>>>>>> 26b3c82... msm8974: add f2fs
 				sbi->last_victim[p.gc_mode] = 0;
 				p.offset = 0;
 				continue;
@@ -335,7 +352,10 @@ got_it:
 				sbi->cur_victim_sec,
 				prefree_segments(sbi), free_segments(sbi));
 	}
+<<<<<<< HEAD
 out:
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	mutex_unlock(&dirty_i->seglist_lock);
 
 	return (p.min_segno == NULL_SEGNO) ? 0 : 1;
@@ -550,7 +570,11 @@ static void move_encrypted_block(struct inode *inode, block_t bidx)
 	int err;
 
 	/* do not read out */
+<<<<<<< HEAD
 	page = f2fs_grab_cache_page(inode->i_mapping, bidx, false);
+=======
+	page = grab_cache_page(inode->i_mapping, bidx);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (!page)
 		return;
 
@@ -617,7 +641,11 @@ static void move_data_page(struct inode *inode, block_t bidx, int gc_type)
 {
 	struct page *page;
 
+<<<<<<< HEAD
 	page = get_lock_data_page(inode, bidx, true);
+=======
+	page = get_lock_data_page(inode, bidx);
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (IS_ERR(page))
 		return;
 
@@ -711,7 +739,11 @@ next_step:
 
 			start_bidx = start_bidx_of_node(nofs, F2FS_I(inode));
 			data_page = get_read_data_page(inode,
+<<<<<<< HEAD
 					start_bidx + ofs_in_node, READA, true);
+=======
+					start_bidx + ofs_in_node, READA);
+>>>>>>> 26b3c82... msm8974: add f2fs
 			if (IS_ERR(data_page)) {
 				iput(inode);
 				continue;
@@ -803,12 +835,22 @@ static int do_garbage_collect(struct f2fs_sb_info *sbi, unsigned int segno,
 	return nfree;
 }
 
+<<<<<<< HEAD
 int f2fs_gc(struct f2fs_sb_info *sbi, bool sync)
 {
 	unsigned int segno, i;
 	int gc_type = sync ? FG_GC : BG_GC;
 	int sec_freed = 0;
 	int ret = -EINVAL;
+=======
+int f2fs_gc(struct f2fs_sb_info *sbi)
+{
+	unsigned int segno = NULL_SEGNO;
+	unsigned int i;
+	int gc_type = BG_GC;
+	int nfree = 0;
+	int ret = -1;
+>>>>>>> 26b3c82... msm8974: add f2fs
 	struct cp_control cpc;
 	struct gc_inode_list gc_list = {
 		.ilist = LIST_HEAD_INIT(gc_list.ilist),
@@ -817,14 +859,21 @@ int f2fs_gc(struct f2fs_sb_info *sbi, bool sync)
 
 	cpc.reason = __get_cp_reason(sbi);
 gc_more:
+<<<<<<< HEAD
 	segno = NULL_SEGNO;
 
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	if (unlikely(!(sbi->sb->s_flags & MS_ACTIVE)))
 		goto stop;
 	if (unlikely(f2fs_cp_error(sbi)))
 		goto stop;
 
+<<<<<<< HEAD
 	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, sec_freed)) {
+=======
+	if (gc_type == BG_GC && has_not_enough_free_secs(sbi, nfree)) {
+>>>>>>> 26b3c82... msm8974: add f2fs
 		gc_type = FG_GC;
 		if (__get_victim(sbi, &segno, gc_type) || prefree_segments(sbi))
 			write_checkpoint(sbi, &cpc);
@@ -839,6 +888,7 @@ gc_more:
 		ra_meta_pages(sbi, GET_SUM_BLOCK(sbi, segno), sbi->segs_per_sec,
 								META_SSA);
 
+<<<<<<< HEAD
 	for (i = 0; i < sbi->segs_per_sec; i++) {
 		/*
 		 * for FG_GC case, halt gcing left segments once failed one
@@ -851,10 +901,15 @@ gc_more:
 
 	if (i == sbi->segs_per_sec && gc_type == FG_GC)
 		sec_freed++;
+=======
+	for (i = 0; i < sbi->segs_per_sec; i++)
+		nfree += do_garbage_collect(sbi, segno + i, &gc_list, gc_type);
+>>>>>>> 26b3c82... msm8974: add f2fs
 
 	if (gc_type == FG_GC)
 		sbi->cur_victim_sec = NULL_SEGNO;
 
+<<<<<<< HEAD
 	if (!sync) {
 		if (has_not_enough_free_secs(sbi, sec_freed))
 			goto gc_more;
@@ -862,13 +917,23 @@ gc_more:
 		if (gc_type == FG_GC)
 			write_checkpoint(sbi, &cpc);
 	}
+=======
+	if (has_not_enough_free_secs(sbi, nfree))
+		goto gc_more;
+
+	if (gc_type == FG_GC)
+		write_checkpoint(sbi, &cpc);
+>>>>>>> 26b3c82... msm8974: add f2fs
 stop:
 	mutex_unlock(&sbi->gc_mutex);
 
 	put_gc_inode(&gc_list);
+<<<<<<< HEAD
 
 	if (sync)
 		ret = sec_freed ? 0 : -EAGAIN;
+=======
+>>>>>>> 26b3c82... msm8974: add f2fs
 	return ret;
 }
 
