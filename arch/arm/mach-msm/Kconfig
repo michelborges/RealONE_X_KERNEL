@@ -3196,6 +3196,14 @@ config PM_DEBUG_WAKEUP
     default n
     bool "Report wakeup source in a uevent"
 
+
+config MSM_SLEEPER
+	bool "Limit max frequency and shut off cores while screen is off"
+	default y
+	help
+	  Limit max frequency and shut off cores while screen is off 
+
+
 endif
 
 config KERNEL_TEXT_MPU_PROT
