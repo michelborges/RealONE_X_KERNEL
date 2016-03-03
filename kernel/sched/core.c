@@ -2259,6 +2259,7 @@ unsigned long this_cpu_load(void)
 	return this->cpu_load[0];
 }
 
+
 unsigned long avg_nr_running(void)
 {
 	unsigned long i, sum = 0;
@@ -2297,6 +2298,7 @@ unsigned long get_avg_nr_running(unsigned int cpu)
 
 	return q->ave_nr_running;
 }
+EXPORT_SYMBOL(get_avg_nr_running);
 
 /*
  * Global load-average calculations
