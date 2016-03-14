@@ -313,6 +313,7 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 		goto Platform_wake;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	/*
 	 * PM_SUSPEND_FREEZE equals
@@ -333,6 +334,8 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 >>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
 =======
 >>>>>>> parent of 24d3095... PM / Sleep: increase ftrace coverage in suspend/resume
+=======
+>>>>>>> parent of 524afb5... PM / sleep: add TEST_PLATFORM support for freeze state
 	error = disable_nonboot_cpus();
 	if (error || suspend_test(TEST_CPUS))
 		goto Enable_cpus;
