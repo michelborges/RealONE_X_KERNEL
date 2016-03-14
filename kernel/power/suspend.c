@@ -329,11 +329,14 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 		goto Platform_wake;
 	}
 
+<<<<<<< HEAD
 	ftrace_stop();
 <<<<<<< HEAD
 >>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
 =======
 >>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
+=======
+>>>>>>> parent of 24d3095... PM / Sleep: increase ftrace coverage in suspend/resume
 	error = disable_nonboot_cpus();
 	if (error || suspend_test(TEST_CPUS))
 		goto Enable_cpus;
@@ -356,7 +359,6 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 
  Enable_cpus:
 	enable_nonboot_cpus();
-	ftrace_start();
 
  Platform_wake:
 	if (suspend_ops->wake)
@@ -390,6 +392,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 			goto Close;
 	}
 	suspend_console();
+	ftrace_stop();
 	suspend_test_start();
 	error = dpm_suspend_start(PMSG_SUSPEND);
 	if (error) {
@@ -409,6 +412,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	suspend_test_start();
 	dpm_resume_end(PMSG_RESUME);
 	suspend_test_finish("resume devices");
+	ftrace_start();
 	resume_console();
  Close:
 	if (suspend_ops->end)
