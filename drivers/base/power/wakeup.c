@@ -382,6 +382,7 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> parent of 1f48f79... fix bad entry
@@ -399,6 +400,8 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 	 */
 	freeze_wake();
 
+=======
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 =======
 >>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	ws->active = true;

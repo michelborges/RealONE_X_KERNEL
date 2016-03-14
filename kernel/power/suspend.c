@@ -46,6 +46,7 @@ const char *const pm_states[PM_SUSPEND_MAX] = {
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	[PM_SUSPEND_FREEZE] = { .label = "freeze", .state = PM_SUSPEND_FREEZE },
 	[PM_SUSPEND_STANDBY] = { .label = "standby", },
 	[PM_SUSPEND_MEM] = { .label = "mem", },
@@ -60,6 +61,8 @@ const char *const pm_states[PM_SUSPEND_MAX] = {
 >>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
 =======
 	[PM_SUSPEND_FREEZE]	= "freeze",
+=======
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	[PM_SUSPEND_STANDBY]	= "standby",
 	[PM_SUSPEND_MEM]	= "mem",
 >>>>>>> parent of 29713cc... PM / sleep: Add state field to pm_states[] entries
@@ -67,6 +70,7 @@ const char *const pm_states[PM_SUSPEND_MAX] = {
 
 static const struct platform_suspend_ops *suspend_ops;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 static bool need_suspend_ops(suspend_state_t state)
 {
@@ -108,6 +112,8 @@ static bool valid_state(suspend_state_t state)
 >>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 =======
 >>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
+=======
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 /**
  *      suspend_timeout - suspend watchdog handler
  *
@@ -166,12 +172,14 @@ bool valid_state(suspend_state_t state)
 =======
 bool valid_state(suspend_state_t state)
 {
-	if (state == PM_SUSPEND_FREEZE)
-		return true;
 	/*
+<<<<<<< HEAD
 	 * PM_SUSPEND_STANDBY and PM_SUSPEND_MEMORY states need lowlevel
 	 * support and need to be valid to the lowlevel
 >>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
+=======
+	 * All states need lowlevel support and need to be valid to the lowlevel
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	 * implementation, no valid callback implies that none are valid.
 	 */
 	return suspend_ops && suspend_ops->valid && suspend_ops->valid(state);
@@ -456,6 +464,7 @@ static int enter_state(suspend_state_t state)
 	error = suspend_prepare();
 	suspend_wdclr();
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 	if (state == PM_SUSPEND_FREEZE)
 		freeze_begin();
@@ -481,6 +490,8 @@ static int enter_state(suspend_state_t state)
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state]);
 >>>>>>> parent of 29713cc... PM / sleep: Add state field to pm_states[] entries
 	error = suspend_prepare(state);
+=======
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 =======
 >>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	if (error)
