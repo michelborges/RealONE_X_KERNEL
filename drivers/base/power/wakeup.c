@@ -380,8 +380,6 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 {
 	unsigned int cec;
 
-<<<<<<< HEAD
-=======
 	if (suspend_marker_entry) {
 		split_counters(&cnt, &inpr);
 		if (cnt == saved_count && inpr == 0) {
