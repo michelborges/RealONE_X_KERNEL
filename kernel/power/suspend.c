@@ -43,14 +43,20 @@ struct pm_sleep_state pm_states[PM_SUSPEND_MAX] = {
 #ifdef CONFIG_EARLYSUSPEND
 	[PM_SUSPEND_ON]	= { .label = "on", .state = PM_SUSPEND_FREEZE },
 #endif
+<<<<<<< HEAD
 	[PM_SUSPEND_FREEZE] = { .label = "freeze", .state = PM_SUSPEND_FREEZE },
 	[PM_SUSPEND_STANDBY] = { .label = "standby", },
 	[PM_SUSPEND_MEM] = { .label = "mem", },
+=======
+	[PM_SUSPEND_STANDBY]	= "standby",
+	[PM_SUSPEND_MEM]	= "mem",
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 };
 
 static const struct platform_suspend_ops *suspend_ops;
 static const struct platform_freeze_ops *freeze_ops;
 
+<<<<<<< HEAD
 static bool need_suspend_ops(suspend_state_t state)
 {
 	return state > PM_SUSPEND_FREEZE;
@@ -93,6 +99,8 @@ static bool valid_state(suspend_state_t state)
 	return suspend_ops && suspend_ops->valid && suspend_ops->valid(state);
 }
 
+=======
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 /**
  *      suspend_timeout - suspend watchdog handler
  *
@@ -147,6 +155,18 @@ void suspend_set_ops(const struct platform_suspend_ops *ops)
 }
 EXPORT_SYMBOL_GPL(suspend_set_ops);
 
+<<<<<<< HEAD
+=======
+bool valid_state(suspend_state_t state)
+{
+	/*
+	 * All states need lowlevel support and need to be valid to the lowlevel
+	 * implementation, no valid callback implies that none are valid.
+	 */
+	return suspend_ops && suspend_ops->valid && suspend_ops->valid(state);
+}
+
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 /**
  * suspend_valid_only_mem - Generic memory-only valid callback.
  *
@@ -201,11 +221,11 @@ static int suspend_test(int level)
  * hibernation).  Run suspend notifiers, allocate the "suspend" console and
  * freeze processes.
  */
-static int suspend_prepare(suspend_state_t state)
+static int suspend_prepare(void)
 {
 	int error;
 
-	if (need_suspend_ops(state) && (!suspend_ops || !suspend_ops->enter))
+	if (!suspend_ops || !suspend_ops->enter)
 		return -EPERM;
 
 	pm_prepare_console();
@@ -249,7 +269,7 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 {
 	int error;
 
-	if (need_suspend_ops(state) && suspend_ops->prepare) {
+	if (suspend_ops->prepare) {
 		error = suspend_ops->prepare();
 		if (error)
 			goto Platform_finish;
@@ -261,7 +281,7 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 		goto Platform_finish;
 	}
 
-	if (need_suspend_ops(state) && suspend_ops->prepare_late) {
+	if (suspend_ops->prepare_late) {
 		error = suspend_ops->prepare_late();
 		if (error)
 			goto Platform_wake;
@@ -294,13 +314,13 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 	enable_nonboot_cpus();
 
  Platform_wake:
-	if (need_suspend_ops(state) && suspend_ops->wake)
+	if (suspend_ops->wake)
 		suspend_ops->wake();
 
 	dpm_resume_start(PMSG_RESUME);
 
  Platform_finish:
-	if (need_suspend_ops(state) && suspend_ops->finish)
+	if (suspend_ops->finish)
 		suspend_ops->finish();
 
 	return error;
@@ -315,11 +335,11 @@ int suspend_devices_and_enter(suspend_state_t state)
 	int error;
 	bool wakeup = false;
 
-	if (need_suspend_ops(state) && !suspend_ops)
+	if (!suspend_ops)
 		return -ENOSYS;
 
 	trace_machine_suspend(state);
-	if (need_suspend_ops(state) && suspend_ops->begin) {
+	if (suspend_ops->begin) {
 		error = suspend_ops->begin(state);
 		if (error)
 			goto Close;
@@ -341,8 +361,8 @@ int suspend_devices_and_enter(suspend_state_t state)
 
 	do {
 		error = suspend_enter(state, &wakeup);
-	} while (!error && !wakeup && need_suspend_ops(state)
-		&& suspend_ops->suspend_again && suspend_ops->suspend_again());
+	} while (!error && !wakeup
+		&& platform_suspend_again());
 
  Resume_devices:
 	suspend_test_start();
@@ -350,7 +370,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	suspend_test_finish("resume devices");
 	resume_console();
  Close:
-	if (need_suspend_ops(state) && suspend_ops->end)
+	if (suspend_ops->end)
 		suspend_ops->end();
 	else if (state == PM_SUSPEND_FREEZE && freeze_ops->end)
 		freeze_ops->end();
@@ -359,7 +379,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	return error;
 
  Recover_platform:
-	if (need_suspend_ops(state) && suspend_ops->recover)
+	if (suspend_ops->recover)
 		suspend_ops->recover();
 	goto Resume_devices;
 }
@@ -413,6 +433,7 @@ static int enter_state(suspend_state_t state)
 	suspend_wdset();
 	error = suspend_prepare();
 	suspend_wdclr();
+<<<<<<< HEAD
 
 	if (state == PM_SUSPEND_FREEZE)
 		freeze_begin();
@@ -434,6 +455,8 @@ static int enter_state(suspend_state_t state)
 
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state].label);
 	error = suspend_prepare(state);
+=======
+>>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	if (error)
 		goto Unlock;
 
