@@ -185,11 +185,6 @@ struct platform_suspend_ops {
 	void (*recover)(void);
 };
 
-struct platform_freeze_ops {
-	int (*begin)(void);
-	void (*end)(void);
-};
-
 #ifdef CONFIG_SUSPEND
 /**
  * suspend_set_ops - set platform dependent suspend operations
@@ -198,7 +193,10 @@ struct platform_freeze_ops {
 extern void suspend_set_ops(const struct platform_suspend_ops *ops);
 extern int suspend_valid_only_mem(suspend_state_t state);
 <<<<<<< HEAD
+<<<<<<< HEAD
 extern void freeze_set_ops(const struct platform_freeze_ops *ops);
+=======
+>>>>>>> parent of d1b180b... ACPI / PM: Hold ACPI scan lock over the "freeze" sleep state
 extern void freeze_wake(void);
 =======
 >>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
@@ -228,7 +226,10 @@ extern int pm_suspend(suspend_state_t state);
 static inline void suspend_set_ops(const struct platform_suspend_ops *ops) {}
 static inline int pm_suspend(suspend_state_t state) { return -ENOSYS; }
 <<<<<<< HEAD
+<<<<<<< HEAD
 static inline void freeze_set_ops(const struct platform_freeze_ops *ops) {}
+=======
+>>>>>>> parent of d1b180b... ACPI / PM: Hold ACPI scan lock over the "freeze" sleep state
 static inline void freeze_wake(void) {}
 =======
 >>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE

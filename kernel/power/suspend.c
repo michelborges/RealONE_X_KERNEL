@@ -66,7 +66,6 @@ const char *const pm_states[PM_SUSPEND_MAX] = {
 };
 
 static const struct platform_suspend_ops *suspend_ops;
-static const struct platform_freeze_ops *freeze_ops;
 
 <<<<<<< HEAD
 static bool need_suspend_ops(suspend_state_t state)
@@ -76,13 +75,6 @@ static bool need_suspend_ops(suspend_state_t state)
 
 static DECLARE_WAIT_QUEUE_HEAD(suspend_freeze_wait_head);
 static bool suspend_freeze_wake;
-
-void freeze_set_ops(const struct platform_freeze_ops *ops)
-{
-	lock_system_sleep();
-	freeze_ops = ops;
-	unlock_system_sleep();
-}
 
 static void freeze_begin(void)
 {
@@ -396,10 +388,6 @@ int suspend_devices_and_enter(suspend_state_t state)
 		error = suspend_ops->begin(state);
 		if (error)
 			goto Close;
-	} else if (state == PM_SUSPEND_FREEZE && freeze_ops->begin) {
-		error = freeze_ops->begin();
-		if (error)
-			goto Close;
 	}
 	suspend_console();
 	suspend_test_start();
@@ -425,9 +413,6 @@ int suspend_devices_and_enter(suspend_state_t state)
  Close:
 	if (suspend_ops->end)
 		suspend_ops->end();
-	else if (state == PM_SUSPEND_FREEZE && freeze_ops->end)
-		freeze_ops->end();
-
 	trace_machine_suspend(PWR_EVENT_EXIT);
 	return error;
 
