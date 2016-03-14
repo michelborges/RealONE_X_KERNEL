@@ -39,10 +39,11 @@ static int suspendsync = 1;
 static int suspendsync;
 #endif
 
-struct pm_sleep_state pm_states[PM_SUSPEND_MAX] = {
+const char *const pm_states[PM_SUSPEND_MAX] = {
 #ifdef CONFIG_EARLYSUSPEND
-	[PM_SUSPEND_ON]	= { "on", PM_SUSPEND_FREEZE },
+	[PM_SUSPEND_ON]		= "on",
 #endif
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 	[PM_SUSPEND_FREEZE] = { .label = "freeze", .state = PM_SUSPEND_FREEZE },
@@ -57,6 +58,11 @@ struct pm_sleep_state pm_states[PM_SUSPEND_MAX] = {
 	[PM_SUSPEND_STANDBY] = { "standby", PM_SUSPEND_STANDBY },
 	[PM_SUSPEND_MEM] = { "mem", PM_SUSPEND_MEM },
 >>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
+=======
+	[PM_SUSPEND_FREEZE]	= "freeze",
+	[PM_SUSPEND_STANDBY]	= "standby",
+	[PM_SUSPEND_MEM]	= "mem",
+>>>>>>> parent of 29713cc... PM / sleep: Add state field to pm_states[] entries
 };
 
 static const struct platform_suspend_ops *suspend_ops;
@@ -481,6 +487,7 @@ static int enter_state(suspend_state_t state)
 	sys_sync();
 	printk("done.\n");
 
+<<<<<<< HEAD
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	if (suspendsync)
 		suspend_sys_sync_queue();
@@ -493,6 +500,9 @@ static int enter_state(suspend_state_t state)
 #endif
 
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state].label);
+=======
+	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state]);
+>>>>>>> parent of 29713cc... PM / sleep: Add state field to pm_states[] entries
 	error = suspend_prepare(state);
 =======
 >>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
@@ -502,7 +512,7 @@ static int enter_state(suspend_state_t state)
 	if (suspend_test(TEST_FREEZER))
 		goto Finish;
 
-	pr_debug("PM: Entering %s sleep\n", pm_states[state].label);
+	pr_debug("PM: Entering %s sleep\n", pm_states[state]);
 	pm_restrict_gfp_mask();
 	error = suspend_devices_and_enter(state);
 	pm_restore_gfp_mask();
