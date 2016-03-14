@@ -304,6 +304,9 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 	}
 
 	ftrace_stop();
+<<<<<<< HEAD
+>>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
+=======
 >>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
 	error = disable_nonboot_cpus();
 	if (error || suspend_test(TEST_CPUS))
