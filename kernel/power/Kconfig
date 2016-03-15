@@ -297,6 +297,3 @@ config QUICK_WAKEUP
 	---help---
 	  Allow kernel driver to do periodic jobs without resuming the full system
 	  This option can increase battery life on android powered smartphone.
-=======
-	default n
->>>>>>> f738ea1... power: make sync on suspend optional

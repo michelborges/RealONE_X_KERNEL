@@ -43,77 +43,12 @@ const char *const pm_states[PM_SUSPEND_MAX] = {
 #ifdef CONFIG_EARLYSUSPEND
 	[PM_SUSPEND_ON]		= "on",
 #endif
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-	[PM_SUSPEND_FREEZE] = { .label = "freeze", .state = PM_SUSPEND_FREEZE },
-	[PM_SUSPEND_STANDBY] = { .label = "standby", },
-	[PM_SUSPEND_MEM] = { .label = "mem", },
-=======
 	[PM_SUSPEND_STANDBY]	= "standby",
 	[PM_SUSPEND_MEM]	= "mem",
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
-=======
-	[PM_SUSPEND_FREEZE] = { "freeze", PM_SUSPEND_FREEZE },
-	[PM_SUSPEND_STANDBY] = { "standby", PM_SUSPEND_STANDBY },
-	[PM_SUSPEND_MEM] = { "mem", PM_SUSPEND_MEM },
->>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
-=======
-	[PM_SUSPEND_FREEZE]	= "freeze",
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
-	[PM_SUSPEND_STANDBY]	= "standby",
-	[PM_SUSPEND_MEM]	= "mem",
->>>>>>> parent of 29713cc... PM / sleep: Add state field to pm_states[] entries
 };
 
 static const struct platform_suspend_ops *suspend_ops;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-static bool need_suspend_ops(suspend_state_t state)
-{
-	return !!(state > PM_SUSPEND_FREEZE);
-}
-
-static DECLARE_WAIT_QUEUE_HEAD(suspend_freeze_wait_head);
-static bool suspend_freeze_wake;
-
-static void freeze_begin(void)
-{
-	suspend_freeze_wake = false;
-}
-
-static void freeze_enter(void)
-{
-	wait_event(suspend_freeze_wait_head, suspend_freeze_wake);
-}
-
-void freeze_wake(void)
-{
-	suspend_freeze_wake = true;
-	wake_up(&suspend_freeze_wait_head);
-}
-EXPORT_SYMBOL_GPL(freeze_wake);
-
-<<<<<<< HEAD
-static bool valid_state(suspend_state_t state)
-{
-	/*
-	 * PM_SUSPEND_STANDBY and PM_SUSPEND_MEM states need low level
-	 * support and need to be valid to the low level
-	 * implementation, no valid callback implies that none are valid.
-	 */
-	return suspend_ops && suspend_ops->valid && suspend_ops->valid(state);
-}
-
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
-=======
->>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 /**
  *      suspend_timeout - suspend watchdog handler
  *
@@ -162,33 +97,15 @@ void suspend_set_ops(const struct platform_suspend_ops *ops)
 }
 EXPORT_SYMBOL_GPL(suspend_set_ops);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 bool valid_state(suspend_state_t state)
 {
 	/*
 	 * All states need lowlevel support and need to be valid to the lowlevel
-=======
-bool valid_state(suspend_state_t state)
-{
-	/*
-<<<<<<< HEAD
-	 * PM_SUSPEND_STANDBY and PM_SUSPEND_MEMORY states need lowlevel
-	 * support and need to be valid to the lowlevel
->>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
-=======
-	 * All states need lowlevel support and need to be valid to the lowlevel
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	 * implementation, no valid callback implies that none are valid.
 	 */
 	return suspend_ops && suspend_ops->valid && suspend_ops->valid(state);
 }
 
-<<<<<<< HEAD
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
-=======
->>>>>>> parent of 02a4f8c... PM / sleep: Use valid_state() for platform-dependent sleep states only
 /**
  * suspend_valid_only_mem - Generic memory-only valid callback.
  *
@@ -312,30 +229,6 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 	if (suspend_test(TEST_PLATFORM))
 		goto Platform_wake;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-	/*
-	 * PM_SUSPEND_FREEZE equals
-	 * frozen processes + suspended devices + idle processors.
-	 * Thus we should invoke freeze_enter() soon after
-	 * all the devices are suspended.
-	 */
-	if (state == PM_SUSPEND_FREEZE) {
-		freeze_enter();
-		goto Platform_wake;
-	}
-
-<<<<<<< HEAD
-	ftrace_stop();
-<<<<<<< HEAD
->>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
-=======
->>>>>>> parent of 3e12dbd... PM / Sleep: Remove ftrace_stop/start() from suspend and hibernate
-=======
->>>>>>> parent of 24d3095... PM / Sleep: increase ftrace coverage in suspend/resume
-=======
->>>>>>> parent of 524afb5... PM / sleep: add TEST_PLATFORM support for freeze state
 	error = disable_nonboot_cpus();
 	if (error || suspend_test(TEST_CPUS))
 		goto Enable_cpus;
@@ -466,37 +359,6 @@ static int enter_state(suspend_state_t state)
 	suspend_wdset();
 	error = suspend_prepare();
 	suspend_wdclr();
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-	if (state == PM_SUSPEND_FREEZE)
-		freeze_begin();
-
-	printk(KERN_INFO "PM: Syncing filesystems ... ");
-	sys_sync();
-	printk("done.\n");
-
-<<<<<<< HEAD
-#ifdef CONFIG_HAS_EARLYSUSPEND
-	if (suspendsync)
-		suspend_sys_sync_queue();
-#else
-	if (suspendsync) {
-		printk(KERN_INFO "PM: Syncing filesystems ... ");
-		sys_sync();
-		printk("done.\n");
-	}
-#endif
-
-	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state].label);
-=======
-	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state]);
->>>>>>> parent of 29713cc... PM / sleep: Add state field to pm_states[] entries
-	error = suspend_prepare(state);
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	if (error)
 		goto Unlock;
 
@@ -562,4 +424,5 @@ static int __init suspendsync_setup(char *str)
 	suspendsync = simple_strtoul(str, NULL, 0);
 	return 1;
 }
+
 __setup("suspendsync=", suspendsync_setup);

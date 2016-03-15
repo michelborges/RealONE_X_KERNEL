@@ -380,30 +380,6 @@ static void wakeup_source_activate(struct wakeup_source *ws)
 {
 	unsigned int cec;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of 1f48f79... fix bad entry
-	if (suspend_marker_entry) {
-		split_counters(&cnt, &inpr);
-		if (cnt == saved_count && inpr == 0) {
-			wakeup_pending = false;
-		}
-	}
-#endif
-
-	/*
-	 * active wakeup source should bring the system
-	 * out of PM_SUSPEND_FREEZE state
-	 */
-	freeze_wake();
-
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
-=======
->>>>>>> parent of 839f628... PM: Introduce suspend state PM_SUSPEND_FREEZE
 	ws->active = true;
 	ws->active_count++;
 	ws->last_time = ktime_get();
