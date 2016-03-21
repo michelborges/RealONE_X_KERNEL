@@ -258,11 +258,7 @@ long sync_meta_pages(struct f2fs_sb_info *sbi, enum page_type type,
 						long nr_to_write)
 {
 	struct address_space *mapping = META_MAPPING(sbi);
-<<<<<<< HEAD
 	pgoff_t index = 0, end = LONG_MAX, prev = LONG_MAX;
-=======
-	pgoff_t index = 0, end = LONG_MAX;
->>>>>>> 26b3c82... msm8974: add f2fs
 	struct pagevec pvec;
 	long nwritten = 0;
 	struct writeback_control wbc = {
@@ -282,7 +278,6 @@ long sync_meta_pages(struct f2fs_sb_info *sbi, enum page_type type,
 		for (i = 0; i < nr_pages; i++) {
 			struct page *page = pvec.pages[i];
 
-<<<<<<< HEAD
 			if (prev == LONG_MAX)
 				prev = page->index - 1;
 			if (nr_to_write != LONG_MAX && page->index != prev + 1) {
@@ -290,8 +285,6 @@ long sync_meta_pages(struct f2fs_sb_info *sbi, enum page_type type,
 				goto stop;
 			}
 
-=======
->>>>>>> 26b3c82... msm8974: add f2fs
 			lock_page(page);
 
 			if (unlikely(page->mapping != mapping)) {
@@ -312,21 +305,14 @@ continue_unlock:
 				break;
 			}
 			nwritten++;
-<<<<<<< HEAD
 			prev = page->index;
-=======
->>>>>>> 26b3c82... msm8974: add f2fs
 			if (unlikely(nwritten >= nr_to_write))
 				break;
 		}
 		pagevec_release(&pvec);
 		cond_resched();
 	}
-<<<<<<< HEAD
 stop:
-=======
-
->>>>>>> 26b3c82... msm8974: add f2fs
 	if (nwritten)
 		f2fs_submit_merged_bio(sbi, type, WRITE);
 
@@ -1023,14 +1009,11 @@ static void do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 
 	start_blk = __start_cp_addr(sbi);
 
-<<<<<<< HEAD
 	/* need to wait for end_io results */
 	wait_on_all_pages_writeback(sbi);
 	if (unlikely(f2fs_cp_error(sbi)))
 		return;
 
-=======
->>>>>>> 26b3c82... msm8974: add f2fs
 	/* write out checkpoint buffer at block 0 */
 	update_meta_page(sbi, ckpt, start_blk++);
 
@@ -1140,12 +1123,9 @@ void write_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 	if (cpc->reason == CP_RECOVERY)
 		f2fs_msg(sbi->sb, KERN_NOTICE,
 			"checkpoint: version = %llx", ckpt_ver);
-<<<<<<< HEAD
 
 	/* do checkpoint periodically */
 	sbi->cp_expires = round_jiffies_up(jiffies + HZ * sbi->cp_interval);
-=======
->>>>>>> 26b3c82... msm8974: add f2fs
 out:
 	mutex_unlock(&sbi->cp_mutex);
 	trace_f2fs_write_checkpoint(sbi->sb, cpc->reason, "finish checkpoint");

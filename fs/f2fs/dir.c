@@ -258,11 +258,7 @@ struct f2fs_dir_entry *f2fs_parent_dir(struct inode *dir, struct page **p)
 	if (f2fs_has_inline_dentry(dir))
 		return f2fs_parent_inline_dir(dir, p);
 
-<<<<<<< HEAD
 	page = get_lock_data_page(dir, 0, false);
-=======
-	page = get_lock_data_page(dir, 0);
->>>>>>> 26b3c82... msm8974: add f2fs
 	if (IS_ERR(page))
 		return NULL;
 
@@ -744,11 +740,7 @@ bool f2fs_empty_dir(struct inode *dir)
 		return f2fs_empty_inline_dir(dir);
 
 	for (bidx = 0; bidx < nblock; bidx++) {
-<<<<<<< HEAD
 		dentry_page = get_lock_data_page(dir, bidx, false);
-=======
-		dentry_page = get_lock_data_page(dir, bidx);
->>>>>>> 26b3c82... msm8974: add f2fs
 		if (IS_ERR(dentry_page)) {
 			if (PTR_ERR(dentry_page) == -ENOENT)
 				continue;
@@ -796,10 +788,6 @@ bool f2fs_fill_dentries(struct file *file, void *dirent, filldir_t filldir,
 		if (types && de->file_type < F2FS_FT_MAX)
 			d_type = types[de->file_type];
 
-<<<<<<< HEAD
-=======
-		/* encrypted case */
->>>>>>> 26b3c82... msm8974: add f2fs
 		de_name.name = d->filename[bit_pos];
 		de_name.len = le16_to_cpu(de->name_len);
 
@@ -807,7 +795,6 @@ bool f2fs_fill_dentries(struct file *file, void *dirent, filldir_t filldir,
 			int save_len = fstr->len;
 			int ret;
 
-<<<<<<< HEAD
 			de_name.name = kmalloc(de_name.len, GFP_NOFS);
 			if (!de_name.name)
 				return false;
@@ -822,14 +809,6 @@ bool f2fs_fill_dentries(struct file *file, void *dirent, filldir_t filldir,
 
 			de_name = *fstr;
 			fstr->len = save_len;
-=======
-			ret = f2fs_fname_disk_to_usr(d->inode, &de->hash_code,
-							&de_name, fstr);
-			de_name = *fstr;
-			fstr->len = save_len;
-			if (ret < 0)
-				return true;
->>>>>>> 26b3c82... msm8974: add f2fs
 		}
 
 		over = filldir(dirent, de_name.name, de_name.len,
@@ -884,11 +863,7 @@ static int f2fs_readdir(struct file *file, void *dirent, filldir_t filldir)
 				min(npages - n, (pgoff_t)MAX_DIR_RA_PAGES));
 
 	for (; n < npages; n++) {
-<<<<<<< HEAD
 		dentry_page = get_lock_data_page(inode, n, false);
-=======
-		dentry_page = get_lock_data_page(inode, n);
->>>>>>> 26b3c82... msm8974: add f2fs
 		if (IS_ERR(dentry_page))
 			continue;
 

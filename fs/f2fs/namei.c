@@ -678,7 +678,6 @@ static void *f2fs_encrypted_follow_link(struct dentry *dentry,
 
 	/* Symlink is encrypted */
 	sd = (struct f2fs_encrypted_symlink_data *)caddr;
-<<<<<<< HEAD
 	cstr.len = le16_to_cpu(sd->len);
 	cstr.name = kmalloc(cstr.len, GFP_NOFS);
 	if (!cstr.name) {
@@ -686,10 +685,6 @@ static void *f2fs_encrypted_follow_link(struct dentry *dentry,
 		goto errout;
 	}
 	memcpy(cstr.name, sd->encrypted_path, cstr.len);
-=======
-	cstr.name = sd->encrypted_path;
-	cstr.len = le16_to_cpu(sd->len);
->>>>>>> 26b3c82... msm8974: add f2fs
 
 	/* this is broken symlink case */
 	if (cstr.name[0] == 0 && cstr.len == 0) {
@@ -711,11 +706,8 @@ static void *f2fs_encrypted_follow_link(struct dentry *dentry,
 	if (res < 0)
 		goto errout;
 
-<<<<<<< HEAD
 	kfree(cstr.name);
 
-=======
->>>>>>> 26b3c82... msm8974: add f2fs
 	paddr = pstr.name;
 
 	/* Null-terminate the name */
@@ -726,10 +718,7 @@ static void *f2fs_encrypted_follow_link(struct dentry *dentry,
 	page_cache_release(cpage);
 	return NULL;
 errout:
-<<<<<<< HEAD
 	kfree(cstr.name);
-=======
->>>>>>> 26b3c82... msm8974: add f2fs
 	f2fs_fname_crypto_free_buffer(&pstr);
 	kunmap(cpage);
 	page_cache_release(cpage);
