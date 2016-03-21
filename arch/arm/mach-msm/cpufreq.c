@@ -17,7 +17,6 @@
  *
  */
 
-#include <linux/earlysuspend.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/cpufreq.h>
@@ -34,16 +33,16 @@
 #include <mach/socinfo.h>
 #include <mach/cpufreq.h>
 
-#ifdef CONFIG_CPU_VOLTAGE_TABLE
-static struct cpufreq_frequency_table *dts_freq_table;
-#endif
-
 #include "acpuclock.h"
 
 #ifdef CONFIG_DEBUG_FS
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <asm/div64.h>
+#endif
+
+#ifdef CONFIG_CPU_VOLTAGE_TABLE
+static struct cpufreq_frequency_table *dts_freq_table;
 #endif
 
 static DEFINE_MUTEX(l2bw_lock);
@@ -71,11 +70,12 @@ static DEFINE_PER_CPU(struct cpufreq_work_struct, cpufreq_work);
 static struct workqueue_struct *msm_cpufreq_wq;
 
 /* maxscroff */
-uint32_t maxscroff_freq = 652800;
-uint32_t maxscroff = 0; 
+uint32_t maxscroff_freq = 729600;
+uint32_t maxscroff = 1; 
 
 /* ex max freq */
 uint32_t ex_max_freq;
+
 
 struct cpufreq_suspend_t {
 	struct mutex suspend_mutex;
@@ -121,20 +121,6 @@ out:
 
 static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq,
 			unsigned int index)
-
-static int __init cpufreq_read_arg_maxscroff(char *max_so)
-{
-	if (strcmp(max_so, "0") == 0) {
-		maxscroff = 0;
-	} else if (strcmp(max_so, "1") == 0) {
-		maxscroff = 1;
-	} else {
-		maxscroff = 0;
-	}
-	return 1;
-}
-
-static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 {
 	int ret = 0;
 	int saved_sched_policy = -EINVAL;
@@ -295,16 +281,22 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 
 	if (cpufreq_frequency_table_cpuinfo(policy, table)) {
 #ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
+#ifdef CONFIG_LOW_CPUCLOCKS
+		policy->cpuinfo.min_freq = LOW_CPUCLOCKS_FREQ_MIN;
+#else
 		policy->cpuinfo.min_freq = CONFIG_MSM_CPU_FREQ_MIN;
+#endif
 		policy->cpuinfo.max_freq = CONFIG_MSM_CPU_FREQ_MAX;
 #endif
 	}
 #ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
+#ifdef CONFIG_LOW_CPUCLOCKS
+	policy->min = LOW_CPUCLOCKS_FREQ_MIN;
+#else
 	policy->min = CONFIG_MSM_CPU_FREQ_MIN;
+#endif
 	policy->max = CONFIG_MSM_CPU_FREQ_MAX;
 #endif
-	policy->max = 2457600;
-	policy->min = 268000;
 
 	cur_freq = msm_cpufreq_get_freq(policy->cpu);
 
@@ -325,7 +317,6 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 		return ret;
 	pr_debug("cpufreq: cpu%d init at %d switching to %d\n",
 			policy->cpu, cur_freq, table[index].frequency);
-	policy->cur = policy->max;
 
 	policy->cur = table[index].frequency;
 
@@ -450,7 +441,6 @@ static ssize_t store_ex_max_freq(struct cpufreq_policy *policy,
 	ex_max_freq = freq_table[index].frequency;
 
 	for_each_possible_cpu(cpu) {
-		msm_cpufreq_set_freq_limits(cpu, MSM_CPUFREQ_NO_LIMIT, ex_max_freq);
 	}
 	cpufreq_update_policy(cpu);
 
@@ -472,6 +462,7 @@ struct freq_attr msm_cpufreq_attr_ex_max_freq = {
 
 
 /** maxscreen off sysfs interface **/
+
 static ssize_t show_max_screen_off_khz(struct cpufreq_policy *policy, char *buf)
 {
 	return sprintf(buf, "%u\n", maxscroff_freq);
@@ -781,6 +772,27 @@ static struct platform_driver msm_cpufreq_plat_driver = {
 		.owner = THIS_MODULE,
 	},
 };
+
+/**
+ * cpufreq_quick_get_util - get the CPU utilization from policy->util
+ * @cpu: CPU number
+ *
+ * This is the last known util, without actually getting it from the driver.
+ * Return value will be same as what is shown in util in sysfs.
+ */
+unsigned int cpufreq_quick_get_util(unsigned int cpu)
+{
+	struct cpufreq_policy *policy = cpufreq_cpu_get(cpu);
+	unsigned int ret_util = 0;
+
+	if (policy) {
+		ret_util = policy->util;
+		cpufreq_cpu_put(policy);
+	}
+
+	return ret_util;
+}
+EXPORT_SYMBOL(cpufreq_quick_get_util);
 
 static int __init msm_cpufreq_register(void)
 {
