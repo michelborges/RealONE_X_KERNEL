@@ -31,14 +31,14 @@
 #include <linux/tick.h>
 
 #define MSM_HOTPLUG			"msm_hotplug"
-#define HOTPLUG_ENABLED			1
+#define HOTPLUG_ENABLED			0
 #define DEFAULT_UPDATE_RATE		HZ / 10
 #define START_DELAY			HZ * 20
 #define MIN_INPUT_INTERVAL		150 * 1000L
 #define DEFAULT_HISTORY_SIZE		10
 #define DEFAULT_DOWN_LOCK_DUR		1000
 #define DEFAULT_BOOST_LOCK_DUR		2500 * 1000L
-#define DEFAULT_NR_CPUS_BOOSTED		1
+#define DEFAULT_NR_CPUS_BOOSTED		NR_CPUS / 2
 #define DEFAULT_MIN_CPUS_ONLINE		1
 #define DEFAULT_MAX_CPUS_ONLINE		NR_CPUS
 #define DEFAULT_FAST_LANE_LOAD		99
@@ -339,8 +339,7 @@ static void cpu_down_work(struct work_struct *work)
 			continue;
 		lowest_cpu = get_lowest_load_cpu();
 		if (lowest_cpu > 0 && lowest_cpu <= stats.total_cpus) {
-			if (check_down_lock(lowest_cpu) ||
-			    check_cpuboost(lowest_cpu))
+			if (check_down_lock(lowest_cpu))
 				break;
 			cpu_down(lowest_cpu);
 		}
