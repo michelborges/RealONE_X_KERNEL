@@ -46,7 +46,7 @@
 #include <linux/moduleparam.h>
 #include <linux/hashtable.h>
 
-#include "workqueue_internal.h"
+#include "workqueue_sched.h"
 
 enum {
 	/*
