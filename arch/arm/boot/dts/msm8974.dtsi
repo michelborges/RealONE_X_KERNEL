@@ -1633,7 +1633,6 @@
 		reg = <0 4>;
 		compatible = "qcom,msm-cpufreq";
 		qcom,cpufreq-table =
-			<  268800  268800  381 >,
 			<  300000  300000  572 >,
 			<  422400  422400 1144 >,
 			<  652800  499200 1525 >,
@@ -2130,8 +2129,8 @@
 		compatible = "qcom,msm-watchdog";
 		reg = <0xf9017000 0x1000>;
 		interrupts = <0 3 0>, <0 4 0>;
-		qcom,bark-time = <22000>;
-		qcom,pet-time = <10000>;
+		qcom,bark-time = <21000>;
+		qcom,pet-time = <20000>;
 		qcom,ipi-ping;
 		qcom,memory-reservation-type = "EBI1";
 		qcom,memory-reservation-size = <0xb000>;

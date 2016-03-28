@@ -319,9 +319,14 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 	ret = set_cpu_freq(policy, table[index].frequency, table[index].index);
 	if (ret)
 		return ret;
+#ifdef CONFIG_MSM_CPU_FREQ_SET_MIN_MAX
+	pr_debug("cpufreq: cpu%d init at %d switching to %d\n",
+			policy->cpu, cur_freq, policy->max);
+	policy->cur = policy->max;
+#else
 	pr_debug("cpufreq: cpu%d init at %d switching to %d\n",
 			policy->cpu, cur_freq, table[index].frequency);
-
+#endif
 	policy->cur = policy->max;
 	cpufreq_frequency_table_get_attr(table, policy->cpu);
 
