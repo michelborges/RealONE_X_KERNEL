@@ -841,31 +841,6 @@ static int mdss_mdp_irq_clk_setup(struct mdss_data_type *mdata)
 	return 0;
 }
 
-void mdss_mdp_dump_power_clk(void)
-{
-	u8 clk_idx = 0;
-	struct clk *clk;
-
-	pr_info(" ============ dump power & mdss clk start ============\n");
-
-	for(clk_idx = MDSS_CLK_AHB ; clk_idx < MDSS_MAX_CLK ;clk_idx++)
-	{
-		clk = mdss_mdp_get_clk(clk_idx);
-		
-	}
-
-	pr_info("%s: mdp_clk_cnt =%d \n", __func__, mdp_clk_cnt);
-	pr_info(" ============ dump power & mdss clk end ============\n");
-}
-
-
-/*static int mdss_iommu_fault_handler(struct iommu_domain *domain,
-		struct device *dev, unsigned long iova, int flags, void *token)
-{
-	pr_err("MDP IOMMU page fault: iova 0x%lx\n", iova);
-	return 0;
-}*/
-
 int mdss_iommu_attach(struct mdss_data_type *mdata)
 {
 	struct iommu_domain *domain;
