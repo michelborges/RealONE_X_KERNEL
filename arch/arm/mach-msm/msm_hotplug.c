@@ -41,7 +41,7 @@
 #define DEFAULT_MIN_CPUS_ONLINE		1
 #define DEFAULT_MAX_CPUS_ONLINE		NR_CPUS
 /* cur_avg_load can be > 200! */
-#define DEFAULT_FAST_LANE_LOAD		100
+#define DEFAULT_FAST_LANE_LOAD		180
 #define DEFAULT_FAST_LANE_MIN_FREQ	1267200
 
 /*
@@ -57,7 +57,7 @@ module_param_named(debug_mask, debug, uint, 0644);
  * suspend mode, if set = 1 hotplug will sleep,
  * if set = 0, then hoplug will be active all the time.
  */
-static unsigned int hotplug_suspend = 1;
+static unsigned int hotplug_suspend = 0;
 module_param_named(hotplug_suspend, hotplug_suspend, uint, 0644);
 
 #define dprintk(msg...)		\
