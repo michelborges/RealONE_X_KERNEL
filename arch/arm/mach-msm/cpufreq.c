@@ -69,14 +69,6 @@ struct cpufreq_work_struct {
 static DEFINE_PER_CPU(struct cpufreq_work_struct, cpufreq_work);
 static struct workqueue_struct *msm_cpufreq_wq;
 
-/* maxscroff */
-uint32_t maxscroff_freq = 652800;
-uint32_t maxscroff = 1; 
-
-/* ex max freq */
-uint32_t ex_max_freq;
-
-
 struct cpufreq_suspend_t {
 	struct mutex suspend_mutex;
 	int device_suspended;
@@ -296,8 +288,8 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 #endif
 	policy->max = CONFIG_MSM_CPU_FREQ_MAX;
 #endif
-	policy->max = 2457600;
-	policy->min = 268800;
+	policy->max = 2500000;
+	policy->min = 300000;
 
 	if (is_clk)
 		cur_freq = clk_get_rate(cpu_clk[policy->cpu])/1000;
@@ -328,7 +320,6 @@ static int __cpuinit msm_cpufreq_init(struct cpufreq_policy *policy)
 			policy->cpu, cur_freq, table[index].frequency);
 #endif
 	policy->cur = policy->max;
-	cpufreq_frequency_table_get_attr(table, policy->cpu);
 
 	policy->cpuinfo.transition_latency =
 		acpuclk_get_switch_time() * NSEC_PER_USEC;
@@ -436,137 +427,8 @@ static int msm_cpufreq_resume(struct cpufreq_policy *policy)
 	return 0;
 }
 
-/** max freq interface **/
-
-static ssize_t show_ex_max_freq(struct cpufreq_policy *policy, char *buf)
-{
-	if (!ex_max_freq)
-		ex_max_freq = policy->max;
-
-	return sprintf(buf, "%u\n", ex_max_freq);
-}
-
-static ssize_t store_ex_max_freq(struct cpufreq_policy *policy,
-		const char *buf, size_t count)
-{
-	unsigned int freq = 0;
-	int ret, cpu;
-	int index;
-	struct cpufreq_frequency_table *freq_table = cpufreq_frequency_get_table(policy->cpu);
-
-	if (!freq_table)
-		return -EINVAL;
-
-	ret = sscanf(buf, "%u", &freq);
-	if (ret != 1)
-		return -EINVAL;
-
-	mutex_lock(&per_cpu(cpufreq_suspend, policy->cpu).suspend_mutex);
-
-	ret = cpufreq_frequency_table_target(policy, freq_table, freq,
-			CPUFREQ_RELATION_H, &index);
-	if (ret)
-		goto out;
-
-	ex_max_freq = freq_table[index].frequency;
-
-	for_each_possible_cpu(cpu) {
-	}
-	cpufreq_update_policy(cpu);
-
-	ret = count;
-
-out:
-	mutex_unlock(&per_cpu(cpufreq_suspend, policy->cpu).suspend_mutex);
-	return ret;
-}
-
-struct freq_attr msm_cpufreq_attr_ex_max_freq = {
-	.attr = { .name = "ex_max_freq",
-		.mode = 0666,
-	},
-	.show = show_ex_max_freq,
-	.store = store_ex_max_freq,
-};
-/** end max freq interface **/
-
-
-/** maxscreen off sysfs interface **/
-
-static ssize_t show_max_screen_off_khz(struct cpufreq_policy *policy, char *buf)
-{
-	return sprintf(buf, "%u\n", maxscroff_freq);
-}
-
-static ssize_t store_max_screen_off_khz(struct cpufreq_policy *policy,
-		const char *buf, size_t count)
-{
-	unsigned int freq = 0;
-	int ret;
-	int index;
-	struct cpufreq_frequency_table *freq_table = cpufreq_frequency_get_table(policy->cpu);
-
-	if (!freq_table)
-		return -EINVAL;
-
-	ret = sscanf(buf, "%u", &freq);
-	if (ret != 1)
-		return -EINVAL;
-
-	mutex_lock(&per_cpu(cpufreq_suspend, policy->cpu).suspend_mutex);
-
-	ret = cpufreq_frequency_table_target(policy, freq_table, freq,
-			CPUFREQ_RELATION_H, &index);
-	if (ret)
-		goto out;
-
-	maxscroff_freq = freq_table[index].frequency;
-
-	ret = count;
-
-out:
-	mutex_unlock(&per_cpu(cpufreq_suspend, policy->cpu).suspend_mutex);
-	return ret;
-}
-
-struct freq_attr msm_cpufreq_attr_max_screen_off_khz = {
-	.attr = { .name = "screen_off_max_freq",
-		.mode = 0644,
-	},
-	.show = show_max_screen_off_khz,
-	.store = store_max_screen_off_khz,
-};
-
-static ssize_t show_max_screen_off(struct cpufreq_policy *policy, char *buf)
-{
-	return sprintf(buf, "%u\n", maxscroff);
-}
-
-static ssize_t store_max_screen_off(struct cpufreq_policy *policy,
-		const char *buf, size_t count)
-{
-	if (buf[0] >= '0' && buf[0] <= '1' && buf[1] == '\n')
-            if (maxscroff != buf[0] - '0') 
-		        maxscroff = buf[0] - '0';
-
-	return count;
-}
-
-struct freq_attr msm_cpufreq_attr_max_screen_off = {
-	.attr = { .name = "screen_off_max",
-		.mode = 0644,
-	},
-	.show = show_max_screen_off,
-	.store = store_max_screen_off,
-};
-
-/** end maxscreen off sysfs interface **/
-
 static struct freq_attr *msm_freq_attr[] = {
 	&cpufreq_freq_attr_scaling_available_freqs,
-	&msm_cpufreq_attr_max_screen_off_khz,
- 	&msm_cpufreq_attr_max_screen_off,
-	&msm_cpufreq_attr_ex_max_freq,
 	NULL,
 };
 
