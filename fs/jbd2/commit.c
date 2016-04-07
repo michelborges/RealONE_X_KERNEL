@@ -1078,11 +1078,15 @@ restart_loop:
 	}
 	spin_unlock(&journal->j_list_lock);
 
+<<<<<<< HEAD
+	if (journal->j_commit_callback)
+=======
 	/* Drop all spin_locks because commit_callback may be block.
 	 * __journal_remove_checkpoint() can not destroy transaction
 	 * under us because it is not marked as T_FINISHED yet */
 
 	if (journal->j_commit_callback) {
+>>>>>>> c2e7218... Linux 3.4.44
 		journal->j_commit_callback(journal, commit_transaction);
 
 	trace_jbd2_end_commit(journal, commit_transaction);
