@@ -1080,7 +1080,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 							pdata);
 		break;
 	case MDSS_EVENT_UNBLANK:
-		lcd_notifier_call_chain(LCD_EVENT_ON_START, NULL);
+		lcd_notifier_call_chain(LCD_EVENT_ON_START);
 		mdss_dsi_get_hw_revision(ctrl_pdata);
 		if (ctrl_pdata->refresh_clk_rate)
 			rc = mdss_dsi_clk_refresh(pdata);
@@ -1095,14 +1095,14 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		pdata->panel_info.cont_splash_esd_rdy = true;
 		break;
 	case MDSS_EVENT_BLANK:
-		lcd_notifier_call_chain(LCD_EVENT_ON_END, NULL);
+		lcd_notifier_call_chain(LCD_EVENT_ON_END);
 		pdata->panel_info.esd_rdy = true;
 #ifdef CONFIG_STATE_NOTIFIER
 		state_resume();
 #endif
 		break;
 	case MDSS_EVENT_BLANK:
-		lcd_notifier_call_chain(LCD_EVENT_OFF_START, NULL); 
+		lcd_notifier_call_chain(LCD_EVENT_OFF_START);
 		power_state = (int) (unsigned long) arg;
 		if (ctrl_pdata->off_cmds.link_state == DSI_HS_MODE)
 			rc = mdss_dsi_blank(pdata);
@@ -1114,7 +1114,7 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		rc = mdss_dsi_off(pdata);
 			rc = mdss_dsi_blank(pdata, power_state);
 		rc = mdss_dsi_off(pdata, power_state);
-		lcd_notifier_call_chain(LCD_EVENT_OFF_END, NULL);
+		lcd_notifier_call_chain(LCD_EVENT_OFF_END);
 #ifdef CONFIG_STATE_NOTIFIER
 		state_suspend();
 #endif
