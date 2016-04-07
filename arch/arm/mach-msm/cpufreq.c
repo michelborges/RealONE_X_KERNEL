@@ -55,7 +55,6 @@ static struct cpufreq_frequency_table *freq_table;
 static unsigned int *l2_khz;
 static bool is_clk;
 static unsigned long *mem_bw;
-static bool hotplug_ready;
 
 struct cpufreq_work_struct {
 	struct work_struct work;
@@ -348,7 +347,7 @@ static int __cpuinit msm_cpufreq_cpu_callback(struct notifier_block *nfb,
 	int rc;
 
 	/* Fail hotplug until this driver can get CPU clocks */
-	if (!hotplug_ready)
+	if (!cpu_clk[0])
 		return NOTIFY_BAD;
 
 	switch (action & ~CPU_TASKS_FROZEN) {
@@ -769,9 +768,6 @@ static int __init msm_cpufreq_probe(struct platform_device *pdev)
 			return PTR_ERR(c);
 		cpu_clk[cpu] = c;
 	}
-
-	if (!cpu_clk[0])
-		return -ENODEV;
 	hotplug_ready = true;
 
 	ret = cpufreq_parse_dt(dev);
