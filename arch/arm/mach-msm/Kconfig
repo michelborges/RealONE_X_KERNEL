@@ -3197,6 +3197,10 @@ config PM_DEBUG_WAKEUP
     default n
     bool "Report wakeup source in a uevent"
 
+config STATE_HELPER
+        bool "State Helper"
+	depends on STATE_NOTIFIER
+	default y
 
 config MSM_SLEEPER
 	bool "Limit max frequency and shut off cores while screen is off"
