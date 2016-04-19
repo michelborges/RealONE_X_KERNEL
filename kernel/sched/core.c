@@ -298,11 +298,6 @@ __read_mostly int scheduler_running;
  */
 int sysctl_sched_rt_runtime = 950000;
 
-/*
- * Maximum possible frequency across all cpus. Task demand and cpu
- * capacity (cpu_power) metrics could be scaled in reference to it.
- */
-static unsigned int max_possible_freq = 1;
 
 /*
  * Number of sched_yield calls that result in a thread yielding
