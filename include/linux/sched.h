@@ -122,10 +122,10 @@ extern void get_avenrun(unsigned long *loads, unsigned long offset, int shift);
 
 #define FSHIFT		11		/* nr of bits of precision */
 #define FIXED_1		(1<<FSHIFT)	/* 1.0 as fixed-point */
-#define LOAD_FREQ	(4*HZ+61)	/* 4.61 sec intervals */
-#define EXP_1		1896		/* 1/exp(4.61sec/1min) as fixed-point */
-#define EXP_5		2017		/* 1/exp(4.61sec/5min) */
-#define EXP_15		2038		/* 1/exp(4.61sec/15min) */
+#define LOAD_FREQ	(5*HZ+1)	/* 5 sec intervals */
+#define EXP_1		1884		/* 1/exp(5sec/1min) as fixed-point */
+#define EXP_5		2014		/* 1/exp(5sec/5min) */
+#define EXP_15		2037		/* 1/exp(5sec/15min) */
 
 #define CALC_LOAD(load,exp,n) \
 	load *= exp; \
@@ -139,16 +139,15 @@ extern int nr_processes(void);
 extern unsigned long nr_running(void);
 extern unsigned long nr_uninterruptible(void);
 extern unsigned long nr_iowait(void);
-extern unsigned long get_avg_nr_running(unsigned int cpu);
-extern unsigned long avg_nr_running(void);
 extern unsigned long nr_iowait_cpu(int cpu);
 extern unsigned long this_cpu_load(void);
 
 extern void sched_update_nr_prod(int cpu, unsigned long nr, bool inc);
 extern void sched_get_nr_running_avg(int *avg, int *iowait_avg);
+extern unsigned long get_avg_nr_running(unsigned int cpu);
+extern unsigned long avg_nr_running(void);
 
 extern void calc_global_load(unsigned long ticks);
-
 extern unsigned long get_parent_ip(unsigned long addr);
 
 struct seq_file;
@@ -195,10 +194,9 @@ print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq)
 #define TASK_DEAD		64
 #define TASK_WAKEKILL		128
 #define TASK_WAKING		256
-#define TASK_PARKED		512
-#define TASK_STATE_MAX		1024
+#define TASK_STATE_MAX		512
 
-#define TASK_STATE_TO_CHAR_STR "RSDTtZXxKWP"
+#define TASK_STATE_TO_CHAR_STR "RSDTtZXxKW"
 
 extern char ___assert_task_state[1 - 2*!!(
 		sizeof(TASK_STATE_TO_CHAR_STR)-1 != ilog2(TASK_STATE_MAX)+1)];
@@ -379,10 +377,7 @@ extern signed long schedule_timeout_killable(signed long timeout);
 extern signed long schedule_timeout_uninterruptible(signed long timeout);
 asmlinkage void schedule(void);
 extern void schedule_preempt_disabled(void);
-#ifdef CONFIG_MUTEX_SPIN_ON_OWNER
 extern int mutex_spin_on_owner(struct mutex *lock, struct task_struct *owner);
-extern int mutex_can_spin_on_owner(struct mutex *lock);
-#endif
 
 struct nsproxy;
 struct user_namespace;
@@ -837,7 +832,6 @@ enum cpu_idle_type {
 };
 
 /*
-<<<<<<< HEAD
  * Increase resolution of nice-level calculations for 64-bit architectures.
  * The extra resolution improves shares distribution and load balancing of
  * low-weight task groups (eg. nice +19 on an autogroup), deeper taskgroup
@@ -863,7 +857,7 @@ enum cpu_idle_type {
 #define SCHED_LOAD_SCALE	(1L << SCHED_LOAD_SHIFT)
 
 /*
- * Increase resolution of cpu_power and rq->util calculations
+ * Increase resolution of cpu_power calculations
  */
 #define SCHED_POWER_SHIFT	10
 #define SCHED_POWER_SCALE	(1L << SCHED_POWER_SHIFT)
@@ -952,7 +946,6 @@ struct sched_group_power {
 struct sched_group {
 	struct sched_group *next;	/* Must be a circular list */
 	atomic_t ref;
-	int balance_cpu;
 
 	unsigned int group_weight;
 	struct sched_group_power *sgp;
@@ -1014,7 +1007,6 @@ struct sched_domain {
 	unsigned long last_balance;	/* init to jiffies. units in jiffies */
 	unsigned int balance_interval;	/* initialise to 1. units in ms. */
 	unsigned int nr_balance_failed; /* initialise to 0 */
-	u64	perf_lb_record;	/* performance balance record */
 
 	u64 last_update;
 
@@ -1161,7 +1153,6 @@ struct sched_class {
 
 #ifdef CONFIG_SMP
 	int  (*select_task_rq)(struct task_struct *p, int sd_flag, int flags);
-	void (*migrate_task_rq)(struct task_struct *p, int next_cpu);
 
 	void (*pre_schedule) (struct rq *this_rq, struct task_struct *task);
 	void (*post_schedule) (struct rq *this_rq);
@@ -1194,18 +1185,6 @@ struct sched_class {
 
 struct load_weight {
 	unsigned long weight, inv_weight;
-};
-
-struct sched_avg {
-	/*
-	 * These sums represent an infinite geometric series and so are bound
-	 * above by 1024/(1-y).  Thus we only need a u32 to store them for for all
-	 * choices of y < 1-2^(-32)*1024.
-	 */
-	u32 runnable_avg_sum, runnable_avg_period;
-	u64 last_runnable_update;
-	s64 decay_count;
-	unsigned long load_avg_contrib;
 };
 
 #ifdef CONFIG_SCHEDSTATS
@@ -1268,15 +1247,6 @@ struct sched_entity {
 	/* rq "owned" by this entity/group: */
 	struct cfs_rq		*my_q;
 #endif
-/*
- * Load-tracking only depends on SMP, FAIR_GROUP_SCHED dependency below may be
- * removed when useful for applications beyond shares distribution (e.g.
- * load-balance).
- */
-#if defined(CONFIG_SMP) && defined(CONFIG_FAIR_GROUP_SCHED)
-	/* Per-entity load-tracking */
-	struct sched_avg	avg;
-#endif
 };
 
 struct sched_rt_entity {
@@ -1316,14 +1286,10 @@ struct task_struct {
 	atomic_t usage;
 	unsigned int flags;	/* per process flags, defined below */
 	unsigned int ptrace;
-	unsigned int yield_count;
 
 #ifdef CONFIG_SMP
 	struct llist_node wake_entry;
 	int on_cpu;
-	struct task_struct *last_wakee;
-	unsigned long wakee_flips;
-	unsigned long wakee_flip_decay_ts;
 #endif
 	int on_rq;
 
@@ -2123,13 +2089,6 @@ extern unsigned int sysctl_sched_min_granularity;
 extern unsigned int sysctl_sched_wakeup_granularity;
 extern unsigned int sysctl_sched_child_runs_first;
 extern unsigned int sysctl_sched_wake_to_idle;
-#ifdef CONFIG_SCHED_DEBUG
-extern __read_mostly unsigned int sysctl_sched_yield_sleep_duration;
-extern __read_mostly int sysctl_sched_yield_sleep_threshold;
-#else
-extern const unsigned int sysctl_sched_yield_sleep_duration;
-extern const int sysctl_sched_yield_sleep_threshold;
-#endif
 
 enum sched_tunable_scaling {
 	SCHED_TUNABLESCALING_NONE,

@@ -1158,8 +1158,7 @@ int sysctl_stat_interval __read_mostly = HZ;
 static void vmstat_update(struct work_struct *w)
 {
 	refresh_cpu_vm_stats(smp_processor_id());
-	schedule_delayed_work_on(smp_processor_id(),
-		&__get_cpu_var(vmstat_work),
+	schedule_delayed_work(&__get_cpu_var(vmstat_work),
 		round_jiffies_relative(sysctl_stat_interval));
 }
 
@@ -1216,12 +1215,10 @@ static int __init setup_vmstat(void)
 #ifdef CONFIG_SMP
 	int cpu;
 
-	cpu_notifier_register_begin();
-	__register_cpu_notifier(&vmstat_notifier);
+	register_cpu_notifier(&vmstat_notifier);
 
 	for_each_online_cpu(cpu)
 		start_cpu_timer(cpu);
-	cpu_notifier_register_done();
 #endif
 #ifdef CONFIG_PROC_FS
 	proc_create("buddyinfo", S_IRUGO, NULL, &fragmentation_file_operations);

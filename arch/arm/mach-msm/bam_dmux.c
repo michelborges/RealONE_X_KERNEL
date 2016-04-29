@@ -1,5 +1,4 @@
 /* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
- * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1635,7 +1634,11 @@ static void ul_timeout(struct work_struct *work)
 			ul_packet_written = 0;
 			queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
 					msecs_to_jiffies(ul_timeout_delay));
-		} else {
+                } else if(polling_mode) {
+                        DMUX_LOG_KERR("%s: BAM is in polling mode, delay UL power down", __func__);
+                        queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+                                       msecs_to_jiffies(UL_TIMEOUT_DELAY));
+                } else {
 			ul_powerdown();
 		}
 	}
@@ -2087,7 +2090,7 @@ static int bam_init(void)
 	a2_props.virt_addr = a2_virt_addr;
 	a2_props.virt_size = a2_phys_size;
 	a2_props.irq = a2_bam_irq;
-	a2_props.options = SPS_BAM_OPT_IRQ_WAKEUP | SPS_BAM_ATMC_MEM;
+	a2_props.options = SPS_BAM_OPT_IRQ_WAKEUP;
 	a2_props.num_pipes = A2_NUM_PIPES;
 	a2_props.summing_threshold = A2_SUMMING_THRESHOLD;
 	a2_props.constrained_logging = true;

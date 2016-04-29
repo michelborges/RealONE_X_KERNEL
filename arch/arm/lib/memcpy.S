@@ -39,7 +39,7 @@
 	.macro str8w ptr reg1 reg2 reg3 reg4 reg5 reg6 reg7 reg8 abort
 	stmia \ptr!, {\reg1, \reg2, \reg3, \reg4, \reg5, \reg6, \reg7, \reg8}
 	.endm
-	
+
 #ifdef CONFIG_USE_LDRDSTRD_OVER_LDMSTM
 	.macro cpy8w dst src reg1 reg2 abort
 	.irp offset, #0, #8, #16, #24

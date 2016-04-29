@@ -26,10 +26,12 @@
 #include <linux/syscore_ops.h>
 #include <linux/ftrace.h>
 #include <linux/rtc.h>
-#include <linux/ftrace.h>
 #include <trace/events/power.h>
 
 #include "power.h"
+
+static void suspend_timeout(unsigned long data);
+static DEFINE_TIMER(suspend_wd, suspend_timeout, 0, 0);
 
 #ifdef CONFIG_PM_SYNC_BEFORE_SUSPEND
 static int suspendsync = 1;
@@ -38,6 +40,9 @@ static int suspendsync;
 #endif
 
 const char *const pm_states[PM_SUSPEND_MAX] = {
+#ifdef CONFIG_EARLYSUSPEND
+	[PM_SUSPEND_ON]		= "on",
+#endif
 	[PM_SUSPEND_FREEZE]	= "freeze",
 	[PM_SUSPEND_STANDBY]	= "standby",
 	[PM_SUSPEND_MEM]	= "mem",
@@ -47,7 +52,7 @@ static const struct platform_suspend_ops *suspend_ops;
 
 static bool need_suspend_ops(suspend_state_t state)
 {
-	return state > PM_SUSPEND_FREEZE;
+	return !!(state > PM_SUSPEND_FREEZE);
 }
 
 static DECLARE_WAIT_QUEUE_HEAD(suspend_freeze_wait_head);
@@ -69,6 +74,42 @@ void freeze_wake(void)
 	wake_up(&suspend_freeze_wait_head);
 }
 EXPORT_SYMBOL_GPL(freeze_wake);
+ 
+/**
+ *      suspend_timeout - suspend watchdog handler
+ *
+ *      Called when timed out in suspending.
+ *      There's not much we can do here to recover so
+ *      BUG() out for a crash-dump
+ *
+ */
+static void suspend_timeout(unsigned long data)
+{
+	struct task_struct *suspend_task = (struct task_struct *)data;
+	printk(KERN_EMERG "**** Suspend timeout\n");
+	if (suspend_task)
+		sched_show_task(suspend_task);
+	BUG();
+}
+
+/**
+ *      suspend_wdset - Sets up suspend watchdog timer.
+ *
+ */
+static void suspend_wdset(void)
+{
+	suspend_wd.data = (unsigned long)current;
+	mod_timer(&suspend_wd, jiffies + (HZ * 60));
+}
+
+/**
+ *      suspend_wdclr - clear suspend watchdog timer.
+ *
+ */
+static void suspend_wdclr(void)
+{
+	del_timer_sync(&suspend_wd);
+}
 
 /**
  * suspend_set_ops - Set the global suspend method table.
@@ -88,7 +129,7 @@ bool valid_state(suspend_state_t state)
 		return true;
 	/*
 	 * PM_SUSPEND_STANDBY and PM_SUSPEND_MEMORY states need lowlevel
-	 * support and need to be valid to the lowlevel
+ 	 * support and need to be valid to the lowlevel
 	 * implementation, no valid callback implies that none are valid.
 	 */
 	return suspend_ops && suspend_ops->valid && suspend_ops->valid(state);
@@ -106,6 +147,28 @@ int suspend_valid_only_mem(suspend_state_t state)
 	return state == PM_SUSPEND_MEM;
 }
 EXPORT_SYMBOL_GPL(suspend_valid_only_mem);
+
+static bool platform_suspend_again(void)
+{
+	int count;
+	bool suspend = suspend_ops->suspend_again ?
+		suspend_ops->suspend_again() : false;
+
+	if (suspend) {
+		/*
+		 * pm_get_wakeup_count() gets an updated count of wakeup events
+		 * that have occured and will return false (i.e. abort suspend)
+		 * if a wakeup event has been started during suspend_again() and
+		 * is still active. pm_save_wakeup_count() stores the count
+		 * and enables pm_wakeup_pending() to properly analyze wakeup
+		 * events before entering suspend in suspend_enter().
+		 */
+		suspend = pm_get_wakeup_count(&count, false) &&
+			  pm_save_wakeup_count(count);
+	}
+
+	return suspend;
+}
 
 static int suspend_test(int level)
 {
@@ -219,8 +282,6 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 		if (!(suspend_test(TEST_CORE) || *wakeup)) {
 			error = suspend_ops->enter(state);
 			events_check_enabled = false;
-		} else if (*wakeup) {
-			error = -EBUSY;
 		}
 		syscore_resume();
 	}
@@ -277,7 +338,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	do {
 		error = suspend_enter(state, &wakeup);
 	} while (!error && !wakeup && need_suspend_ops(state)
-		&& suspend_ops->suspend_again && suspend_ops->suspend_again());
+		&& platform_suspend_again());
 
  Resume_devices:
 	suspend_test_start();
@@ -328,23 +389,19 @@ static int enter_state(suspend_state_t state)
 	if (!mutex_trylock(&pm_mutex))
 		return -EBUSY;
 
+	if (state == PM_SUSPEND_FREEZE)
+		freeze_begin();
+
 	if (suspendsync) {
 		printk(KERN_INFO "PM: Syncing filesystems ... ");
 		sys_sync();
 		printk("done.\n");
 	}
 
-	if (state == PM_SUSPEND_FREEZE)
-		freeze_begin();
-
-#ifdef CONFIG_PM_SYNC_BEFORE_SUSPEND
-	printk(KERN_INFO "PM: Syncing filesystems ... ");
-	sys_sync();
-	printk("done.\n");
-#endif
-
 	pr_debug("PM: Preparing system for %s sleep\n", pm_states[state]);
+	suspend_wdset();
 	error = suspend_prepare(state);
+	suspend_wdclr();
 	if (error)
 		goto Unlock;
 
@@ -358,7 +415,9 @@ static int enter_state(suspend_state_t state)
 
  Finish:
 	pr_debug("PM: Finishing wakeup.\n");
+	suspend_wdset();
 	suspend_finish();
+	suspend_wdclr();
  Unlock:
 	mutex_unlock(&pm_mutex);
 	return error;

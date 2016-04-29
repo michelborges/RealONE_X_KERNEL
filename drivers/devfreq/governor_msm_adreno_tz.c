@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -25,9 +25,7 @@ static struct notifier_block adreno_tz_state_notif;
 #endif
 #include <mach/scm.h>
 #include "governor.h"
-#ifdef CONFIG_ADRENO_IDLER
-#include "adreno_idler.h"
-#endif
+
 static DEFINE_SPINLOCK(tz_lock);
 
 /*
@@ -108,17 +106,9 @@ extern int simple_gpu_algorithm(int level,
 #endif
 
 #ifdef CONFIG_ADRENO_IDLER
-
 extern int adreno_idler(struct devfreq_dev_status stats, struct devfreq *devfreq,
-	 	 unsigned long *freq);
+		 unsigned long *freq);
 #endif
-
-#ifdef CONFIG_SIMPLE_GPU_ALGORITHM
-extern int simple_gpu_active;
-extern int simple_gpu_algorithm(int level,
-				struct devfreq_msm_adreno_tz_data *priv);
-#endif
-
 static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 				u32 *flag)
 {
@@ -180,7 +170,8 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 	/*
 	 * Do not waste CPU cycles running this algorithm if
 	 * the GPU just started, or if less than FLOOR time
-	 * has passed since the last run.
+	 * has passed since the last run or the gpu hasn't been
+	 * busier than MIN_BUSY.
 	 */
 	if ((stats.total_time == 0) ||
 		(priv->bin.total_time < FLOOR) ||
@@ -386,7 +377,6 @@ static int tz_suspend(struct devfreq *devfreq)
 	priv->bus.total_time = 0;
 	priv->bus.gpu_time = 0;
 	priv->bus.ram_time = 0;
-
 	return 0;
 }
 
@@ -445,7 +435,6 @@ static int state_notifier_callback(struct notifier_block *this,
 
 	return NOTIFY_OK;
 }
-
 #endif
 
 static int __init msm_adreno_tz_init(void)

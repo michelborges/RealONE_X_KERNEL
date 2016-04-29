@@ -23,7 +23,7 @@
 /* 
  * Timeout for stopping processes
  */
-#define TIMEOUT	(2 * HZ)
+#define TIMEOUT	(4 * HZ)
 
 static int try_to_freeze_tasks(bool user_only)
 {

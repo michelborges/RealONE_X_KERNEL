@@ -39,6 +39,7 @@
 #include <linux/ratelimit.h>
 #include "internal.h"
 #include "mount.h"
+
 #ifdef CONFIG_STATE_NOTIFIER
 #include <linux/state_notifier.h>
 static struct notifier_block dcache_state_notif;
@@ -82,12 +83,12 @@ static struct notifier_block dcache_state_notif;
  *   dentry1->d_lock
  *     dentry2->d_lock
  */
-int sysctl_vfs_cache_pressure __read_mostly = 100;
-EXPORT_SYMBOL_GPL(sysctl_vfs_cache_pressure);
+#define DEFAULT_VFS_CACHE_PRESSURE 60
+#define DEFAULT_VFS_SUSPEND_CACHE_PRESSURE 20
+int sysctl_vfs_cache_pressure __read_mostly, resume_cache_pressure;
+int sysctl_vfs_suspend_cache_pressure __read_mostly, suspend_cache_pressure;
 
-#ifdef CONFIG_STATE_NOTIFIER
-static int adaptive_cache_pressure = 100; /* Value should be same as above. */
-#endif
+EXPORT_SYMBOL_GPL(sysctl_vfs_cache_pressure);
 
 static __cacheline_aligned_in_smp DEFINE_SPINLOCK(dcache_lru_lock);
 __cacheline_aligned_in_smp DEFINE_SEQLOCK(rename_lock);
@@ -3011,6 +3012,25 @@ ino_t find_inode_number(struct dentry *dir, struct qstr *name)
 }
 EXPORT_SYMBOL(find_inode_number);
 
+#ifdef CONFIG_STATE_NOTIFIER
+static int state_notifier_callback(struct notifier_block *this,
+				unsigned long event, void *data)
+{
+	switch (event) {
+		case STATE_NOTIFIER_ACTIVE:
+			sysctl_vfs_cache_pressure = resume_cache_pressure;
+			break;
+		case STATE_NOTIFIER_SUSPEND:
+			sysctl_vfs_cache_pressure = suspend_cache_pressure;
+			break;
+		default:
+			break;
+	}
+
+	return NOTIFY_OK;
+}
+#endif
+
 static __initdata unsigned long dhash_entries;
 static int __init set_dhash_entries(char *str)
 {
@@ -3081,28 +3101,13 @@ EXPORT_SYMBOL(names_cachep);
 
 EXPORT_SYMBOL(d_genocide);
 
-#ifdef CONFIG_STATE_NOTIFIER
-static int state_notifier_callback(struct notifier_block *this,
-				unsigned long event, void *data)
-{
-	switch (event) {
-		case STATE_NOTIFIER_ACTIVE:
-			sysctl_vfs_cache_pressure = adaptive_cache_pressure;
-			break;
-		case STATE_NOTIFIER_SUSPEND:
-			adaptive_cache_pressure = sysctl_vfs_cache_pressure;
-			sysctl_vfs_cache_pressure = adaptive_cache_pressure >> 1;
-			break;
-		default:
-			break;
-	}
-
-	return NOTIFY_OK;
-}
-#endif
-
 void __init vfs_caches_init_early(void)
 {
+	sysctl_vfs_cache_pressure = resume_cache_pressure =
+		DEFAULT_VFS_CACHE_PRESSURE;
+	sysctl_vfs_suspend_cache_pressure = suspend_cache_pressure =
+		DEFAULT_VFS_SUSPEND_CACHE_PRESSURE;
+
 	dcache_init_early();
 	inode_init_early();
 }

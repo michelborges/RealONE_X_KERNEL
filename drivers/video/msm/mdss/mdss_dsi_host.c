@@ -1400,7 +1400,6 @@ need_lock:
 	mutex_unlock(&ctrl->cmd_mutex);
 	return ret;
 }
-
 #ifdef CONFIG_DEBUG_FS
 void mdss_dsi_debug_check_te(struct mdss_panel_data *pdata)
 {

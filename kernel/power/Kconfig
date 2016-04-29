@@ -272,29 +272,17 @@ config PM_CLK
 	def_bool y
 	depends on PM && HAVE_CLK
 
-config PM_GENERIC_DOMAINS
-	bool
-	depends on PM
-
 config WQ_POWER_EFFICIENT_DEFAULT
 	bool "Enable workqueue power-efficient mode by default"
 	depends on PM
 	default n
 	help
-	  Per-cpu workqueues are generally preferred because they show
-	  better performance thanks to cache locality; unfortunately,
-	  per-cpu workqueues tend to be more power hungry than unbound
-	  workqueues.
-
-	  Enabling workqueue.power_efficient kernel parameter makes the
-	  per-cpu workqueues which were observed to contribute
-	  significantly to power consumption unbound, leading to measurably
-	  lower power usage at the cost of small performance overhead.
-
-	  This config option determines whether workqueue.power_efficient
-	  is enabled by default.
 
 	  If in doubt, say N.
+
+config PM_GENERIC_DOMAINS
+	bool
+	depends on PM
 
 config PM_GENERIC_DOMAINS_RUNTIME
 	def_bool y
@@ -316,13 +304,6 @@ config PM_SYNC_BEFORE_SUSPEND
 	depends on PM
 	default n
 
-config SUSPEND_TIME_TIMEKEEPING
-	bool "get suspend time from timekeeping"
-	default y
-	---help---
-	  Get the suspend time in suspend from timekeeping for the archs
-	  that don't support persistent clock.
-
 config QUICK_WAKEUP
 	bool "Quick wakeup"
 	depends on SUSPEND
@@ -330,14 +311,3 @@ config QUICK_WAKEUP
 	---help---
 	  Allow kernel driver to do periodic jobs without resuming the full system
 	  This option can increase battery life on android powered smartphone.
-
-config PARTIALRESUME
-	bool "Partial-resume framework"
-	---help---
-	  Provides hooks for drivers to register partial-resume handlers.
-	  Similar to suspend_again support already in kernel, except that it
-	  operates with kernel threads unfrozen and userspace still frozen,
-	  allowing callbacks to block on work queues and kernel threads.
-	  Partial resume will occur only if all wakeup sources have
-	  partial-resume handlers associated with them, and they all return
-	  true.
