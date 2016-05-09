@@ -2524,4 +2524,6 @@ source "security/Kconfig"
 
 source "crypto/Kconfig"
 
+source "drivers/cpuquiet/Kconfig"
+
 source "lib/Kconfig"

@@ -26,14 +26,7 @@ DEFINE_MUTEX(cpuquiet_lock);
 
 static int __init cpuquiet_init(void)
 {
-	int ret;
-	
-	ret = cpuquiet_add_interface(cpu_subsys.dev_root);
-	if (ret)
-		return ret;
-		
-	return 0;
+	return cpuquiet_add_interface(cpu_subsys.dev_root);
 }
 
 core_initcall(cpuquiet_init);
-

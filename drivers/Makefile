@@ -141,6 +141,7 @@ obj-$(CONFIG_PM_DEVFREQ)	+= devfreq/
 #MobiCore
 obj-$(CONFIG_MOBICORE_SUPPORT)  += gud/
 
+obj-$(CONFIG_CPU_QUIET)		+= cpuquiet/
+
 obj-$(CONFIG_CORESIGHT)		+= coresight/
 
-obj-$(CONFIG_CPUQUIET_FRAMEWORK) += cpuquiet/

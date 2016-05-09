@@ -23,25 +23,23 @@
 #include <linux/kobject.h>
 #include <linux/platform_device.h>
 
-#define CPUQUIET_NAME_LEN 16
-#define CPUQUIET_TAG                       "[CPUQUIET]: "
+#define CPU_QUIET_NAME_LEN 16
 
 struct cpuquiet_governor {
-	char			name[CPUQUIET_NAME_LEN];
+	char			name[CPU_QUIET_NAME_LEN];
 	struct list_head	governor_list;
 	int (*start)		(void);
 	void (*stop)		(void);
 	int (*store_active)	(unsigned int cpu, bool active);
 	void (*device_free_notification) (void);
 	void (*device_busy_notification) (void);
-	void (*touch_event_notification) (void);
 	struct module		*owner;
 };
 
 struct cpuquiet_driver {
-	char			name[CPUQUIET_NAME_LEN];
-	int (*quiesence_cpu)	(unsigned int cpunumber);
-	int (*wake_cpu)		(unsigned int cpunumber);
+	char			name[CPU_QUIET_NAME_LEN];
+	int (*quiesence_cpu)	(unsigned int cpunumber, bool sync);
+	int (*wake_cpu)		(unsigned int cpunumber, bool sync);
 	int			avg_hotplug_latency_ms;
 	int			max_cpus;
 	int			min_cpus;
@@ -49,8 +47,8 @@ struct cpuquiet_driver {
 
 extern int cpuquiet_register_governor(struct cpuquiet_governor *gov);
 extern void cpuquiet_unregister_governor(struct cpuquiet_governor *gov);
-extern int cpuquiet_quiesence_cpu(unsigned int cpunumber);
-extern int cpuquiet_wake_cpu(unsigned int cpunumber);
+extern int cpuquiet_quiesence_cpu(unsigned int cpunumber, bool sync);
+extern int cpuquiet_wake_cpu(unsigned int cpunumber, bool sync);
 extern int cpuquiet_register_driver(struct cpuquiet_driver *drv);
 extern void cpuquiet_unregister_driver(struct cpuquiet_driver *drv);
 extern int cpuquiet_get_avg_hotplug_latency(void);
@@ -65,7 +63,6 @@ extern int cpuquiet_add_group(struct attribute_group *attrs);
 extern void cpuquiet_remove_group(struct attribute_group *attrs);
 extern void cpuquiet_device_busy(void);
 extern void cpuquiet_device_free(void);
-extern void cpuquiet_touch_event(void);
 int cpuquiet_kobject_init(struct kobject *kobj, struct kobj_type *type,
 				char *name);
 extern unsigned int nr_cluster_ids;
@@ -121,4 +118,4 @@ extern ssize_t cpuquiet_auto_sysfs_show(struct kobject *kobj,
 extern ssize_t cpuquiet_auto_sysfs_store(struct kobject *kobj,
 					struct attribute *attr, const char *buf,
 					size_t count);
-#endif
+#endif																																							
