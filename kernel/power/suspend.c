@@ -239,8 +239,9 @@ int suspend_devices_and_enter(suspend_state_t state)
 
 	do {
 		error = suspend_enter(state, &wakeup);
-	} while (!error && !wakeup && need_suspend_ops(state)
-		&& suspend_ops->suspend_again && suspend_ops->suspend_again());
+  	} while (!error && !wakeup
+  		&& suspend_ops->suspend_again && suspend_ops->suspend_again());
+
 
  Resume_devices:
 	suspend_test_start();
@@ -296,9 +297,6 @@ static int enter_state(suspend_state_t state)
 		sys_sync();
 		printk("done.\n");
 	}
-
-	if (state == PM_SUSPEND_FREEZE)
-		freeze_begin();
 
 #ifdef CONFIG_PM_SYNC_BEFORE_SUSPEND
 	printk(KERN_INFO "PM: Syncing filesystems ... ");
