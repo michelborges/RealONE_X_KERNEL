@@ -27,7 +27,7 @@
 
 #define MSM_HOTPLUG			"msm_hotplug"
 #define HOTPLUG_ENABLED			0
-#define DEFAULT_UPDATE_RATE		60
+#define DEFAULT_UPDATE_RATE		30
 #define START_DELAY			20000
 #define MIN_INPUT_INTERVAL		200 * 1000L
 #define DEFAULT_HISTORY_SIZE		10
@@ -36,7 +36,7 @@
 #define DEFAULT_NR_CPUS_BOOSTED		2
 #define DEFAULT_MIN_CPUS_ONLINE		1
 #define DEFAULT_MAX_CPUS_ONLINE		NR_CPUS
-#define DEFAULT_FAST_LANE_LOAD		100
+#define DEFAULT_FAST_LANE_LOAD		80
 #define DEFAULT_FAST_LANE_MIN_FREQ	1728000
 
 /*
@@ -508,12 +508,6 @@ static void __ref msm_hotplug_suspend(void)
 				continue;
 			cpu_down(cpu);
 		}
-
-		/*
-		 * Force Enable CPU1 as it set in max_cpus_online
-		 * when screen is off to reduce system lags and reboots.
-		 */
-		cpu_up(1);
 
 		if (debug >= 2)
 			dprintk("%s: suspended.\n", MSM_HOTPLUG);
