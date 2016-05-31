@@ -498,7 +498,6 @@ static DEFINE_MUTEX(worker_pool_idr_mutex);
 static DEFINE_IDR(worker_pool_idr);
 
 static int worker_thread(void *__worker);
-static unsigned int work_cpu(struct work_struct *work);
 
 static int std_worker_pool_pri(struct worker_pool *pool)
 {
@@ -1498,7 +1497,6 @@ static void rebind_workers(struct global_cwq *gcwq)
 	for_each_busy_worker(worker, i, pos, gcwq) {
 		struct work_struct *rebind_work = &worker->rebind_work;
 		struct workqueue_struct *wq;
-		unsigned long worker_flags = worker->flags;
 
 		if (test_and_set_bit(WORK_STRUCT_PENDING_BIT,
 				     work_data_bits(rebind_work)))
@@ -3461,12 +3459,13 @@ EXPORT_SYMBOL_GPL(workqueue_congested);
  * RETURNS:
  * CPU number if @work was ever queued.  WORK_CPU_NONE otherwise.
  */
-static unsigned int work_cpu(struct work_struct *work)
+unsigned int work_cpu(struct work_struct *work)
 {
 	struct global_cwq *gcwq = get_work_gcwq(work);
 
 	return gcwq ? gcwq->cpu : WORK_CPU_NONE;
 }
+EXPORT_SYMBOL_GPL(work_cpu);
 
 /**
  * work_busy - test whether a work is currently pending or running

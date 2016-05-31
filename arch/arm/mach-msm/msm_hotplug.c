@@ -1,16 +1,13 @@
 /*
  * MSM Hotplug Driver
  *
- * Copyright (c) 2014-2016, Pranav Vashi <neobuddy89@gmail.com>
  * Copyright (c) 2013-2014, Fluxi <linflux@arcor.de>
- * Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2016, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
- *
  */
-
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/cpu.h>
@@ -21,9 +18,7 @@
 #include <linux/device.h>
 #include <linux/slab.h>
 #include <linux/cpufreq.h>
-#ifdef CONFIG_STATE_NOTIFIER
 #include <linux/state_notifier.h>
-#endif
 #include <linux/mutex.h>
 #include <linux/input.h>
 #include <linux/math64.h>
@@ -32,17 +27,16 @@
 
 #define MSM_HOTPLUG			"msm_hotplug"
 #define HOTPLUG_ENABLED			1
-#define DEFAULT_UPDATE_RATE		100
-#define START_DELAY			10000
-#define MIN_INPUT_INTERVAL		150 * 1000L
+#define DEFAULT_UPDATE_RATE		60
+#define START_DELAY			20000
+#define MIN_INPUT_INTERVAL		200 * 1000L
 #define DEFAULT_HISTORY_SIZE		10
-#define DEFAULT_DOWN_LOCK_DUR		1000
-#define DEFAULT_BOOST_LOCK_DUR		500 * 1000L
-#define DEFAULT_NR_CPUS_BOOSTED		2
+#define DEFAULT_DOWN_LOCK_DUR		500
+#define DEFAULT_BOOST_LOCK_DUR		1000 * 1000L
+#define DEFAULT_NR_CPUS_BOOSTED		1
 #define DEFAULT_MIN_CPUS_ONLINE		1
-#define DEFAULT_MAX_CPUS_ONLINE		NR_CPUS
-/* cur_avg_load can be > 200! */
-#define DEFAULT_FAST_LANE_LOAD		180
+#define DEFAULT_MAX_CPUS_ONLINE		4
+#define DEFAULT_FAST_LANE_LOAD		90
 #define DEFAULT_FAST_LANE_MIN_FREQ	1574400
 
 /*
@@ -55,10 +49,11 @@ static unsigned int debug = 2;
 module_param_named(debug_mask, debug, uint, 0644);
 
 /*
- * suspend mode, if set = 1 hotplug will sleep,
- * if set = 0, then hoplug will be active all the time.
+ * Suspend mode.
+ * hotplug_suspend = 0 will leave hotplug enabled during suspend.
+ * hotplug_suspend = 1 will force disable cores during suspend.
  */
-static unsigned int hotplug_suspend = 0;
+static unsigned int hotplug_suspend = 1;
 module_param_named(hotplug_suspend, hotplug_suspend, uint, 0644);
 
 #define dprintk(msg...)		\
@@ -212,6 +207,7 @@ static unsigned int load_at_max_freq(void)
 
 	return total_load;
 }
+
 static void update_load_stats(void)
 {
 	unsigned int i, j;
@@ -413,6 +409,7 @@ static unsigned int load_to_update_rate(unsigned int load)
 
 	ret = stats.update_rates[i];
 	spin_unlock_irqrestore(&stats.update_rates_lock, flags);
+
 	return ret;
 }
 
@@ -485,7 +482,6 @@ reschedule:
 	reschedule_hotplug_work();
 }
 
-#ifdef CONFIG_STATE_NOTIFIER
 static void __ref msm_hotplug_suspend(void)
 {
 	int cpu;
@@ -499,7 +495,7 @@ static void __ref msm_hotplug_suspend(void)
 		hotplug.min_cpus_online_res = hotplug.min_cpus_online;
 		hotplug.min_cpus_online = 1;
 		hotplug.max_cpus_online_res = hotplug.max_cpus_online;
-		hotplug.max_cpus_online = 3;
+		hotplug.max_cpus_online = 2;
 		mutex_unlock(&hotplug.msm_hotplug_mutex);
 
 		/* Flush hotplug workqueue */
@@ -514,11 +510,10 @@ static void __ref msm_hotplug_suspend(void)
 		}
 
 		/*
-		 * Enabled core 1,2 so we will have 0-2 online
-		 * when screen is OFF to reduce system lags and reboots.
+		 * Force Enable CPU1 as it set in max_cpus_online
+		 * when screen is off to reduce system lags and reboots.
 		 */
 		cpu_up(1);
-		cpu_up(2);
 
 		if (debug >= 2)
 			dprintk("%s: suspended.\n", MSM_HOTPLUG);
@@ -578,7 +573,6 @@ static int state_notifier_callback(struct notifier_block *this,
 
 	return NOTIFY_OK;
 }
-#endif
 
 static void hotplug_input_event(struct input_handle *handle, unsigned int type,
 				unsigned int code, int value)
@@ -629,10 +623,12 @@ static int hotplug_input_connect(struct input_handler *handler,
 		goto err_open;
 
 	return 0;
+
 err_open:
 	input_unregister_handle(handle);
 err_register:
 	kfree(handle);
+
 	return err;
 }
 
@@ -684,14 +680,12 @@ static int __ref msm_hotplug_start(void)
 		goto err_out;
 	}
 
-#ifdef CONFIG_STATE_NOTIFIER
 	hotplug.notif.notifier_call = state_notifier_callback;
 	if (state_register_client(&hotplug.notif)) {
 		pr_err("%s: Failed to register State notifier callback\n",
 			MSM_HOTPLUG);
 		goto err_dev;
 	}
-#endif
 
 	ret = input_register_handler(&hotplug_input_handler);
 	if (ret) {
@@ -737,10 +731,12 @@ static int __ref msm_hotplug_start(void)
 			      msecs_to_jiffies(START_DELAY));
 
 	return ret;
+
 err_dev:
 	destroy_workqueue(hotplug_wq);
 err_out:
 	hotplug.msm_enabled = 0;
+
 	return ret;
 }
 
@@ -762,9 +758,8 @@ static void msm_hotplug_stop(void)
 	mutex_destroy(&stats.stats_mutex);
 	kfree(stats.load_hist);
 
-#ifdef CONFIG_STATE_NOTIFIER
 	state_unregister_client(&hotplug.notif);
-#endif
+
 	hotplug.notif.notifier_call = NULL;
 	input_unregister_handler(&hotplug_input_handler);
 
@@ -800,6 +795,7 @@ static unsigned int *get_tokenized_data(const char *buf, int *num_tokens)
 	}
 
 	cp = buf;
+
 	i = 0;
 	while (i < ntokens) {
 		if (sscanf(cp, "%d", &tokenized_data[i++]) != 1)
@@ -920,6 +916,7 @@ static ssize_t show_update_rates(struct device *dev,
 
 	sprintf(buf + ret - 1, "\n");
 	spin_unlock_irqrestore(&stats.update_rates_lock, flags);
+
 	return ret;
 }
 
@@ -941,6 +938,7 @@ static ssize_t store_update_rates(struct device *dev,
 	stats.update_rates = new_update_rates;
 	stats.nupdate_rates = ntokens;
 	spin_unlock_irqrestore(&stats.update_rates_lock, flags);
+
 	return count;
 }
 
@@ -1231,8 +1229,10 @@ static int msm_hotplug_probe(struct platform_device *pdev)
 	}
 
 	return ret;
+
 err_dev:
 	module_kobj = NULL;
+
 	return ret;
 }
 
@@ -1284,11 +1284,10 @@ static void __exit msm_hotplug_exit(void)
 	platform_device_unregister(&msm_hotplug_device);
 	platform_driver_unregister(&msm_hotplug_driver);
 }
-
 late_initcall(msm_hotplug_init);
 module_exit(msm_hotplug_exit);
 
+MODULE_LICENSE("GPLv2");
 MODULE_AUTHOR("Fluxi <linflux@arcor.de>, \
 				Pranav Vashi <neobuddy89@gmail.com>");
 MODULE_DESCRIPTION("MSM Hotplug Driver");
-MODULE_LICENSE("GPLv2");
