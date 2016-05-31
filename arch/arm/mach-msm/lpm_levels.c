@@ -32,6 +32,7 @@
 #include "pm.h"
 #include "rpm-notifier.h"
 #include "spm.h"
+#include "idle.h"
 
 #define SCLK_HZ (32768)
 
