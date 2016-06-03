@@ -68,8 +68,6 @@ extern __read_mostly int scheduler_running;
 #define DL_SCALE (10)
 
 /*
-
-/*
  * These are the 'tuning knobs' of the scheduler:
  */
 
