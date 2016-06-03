@@ -7,8 +7,6 @@
 
 #include <linux/slab.h>
 
-int sched_rr_timeslice = RR_TIMESLICE;
-
 static int do_sched_rt_period_timer(struct rt_bandwidth *rt_b, int overrun);
 
 struct rt_bandwidth def_rt_bandwidth;
@@ -1714,7 +1712,7 @@ static void task_woken_rt(struct rq *rq, struct task_struct *p)
 	    !test_tsk_need_resched(rq->curr) &&
 	    has_pushable_tasks(rq) &&
 	    p->rt.nr_cpus_allowed > 1 &&
-	    (dl_task(rq->curr) || rt_task(rq->curr)) &&
+	    rt_task(rq->curr) &&
 	    (rq->curr->rt.nr_cpus_allowed < 2 ||
 	     rq->curr->prio <= p->prio))
 		push_rt_tasks(rq);
@@ -1922,7 +1920,7 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
 	if (--p->rt.time_slice)
 		return;
 
-	p->rt.time_slice = sched_rr_timeslice;
+	p->rt.time_slice = RR_TIMESLICE;
 
 	/*
 	 * Requeue to the end of queue if we (and all of our ancestors) are not
@@ -1953,7 +1951,7 @@ static unsigned int get_rr_interval_rt(struct rq *rq, struct task_struct *task)
 	 * Time slice is 0 for SCHED_FIFO tasks
 	 */
 	if (task->policy == SCHED_RR)
-		return sched_rr_timeslice;
+		return RR_TIMESLICE;
 	else
 		return 0;
 }
