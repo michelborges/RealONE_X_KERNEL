@@ -26,7 +26,6 @@
 #include <linux/syscore_ops.h>
 #include <linux/ftrace.h>
 #include <linux/rtc.h>
-#include <linux/ftrace.h>
 #include <trace/events/power.h>
 
 #include "power.h"
@@ -289,7 +288,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	suspend_test_start();
 	error = dpm_suspend_start(PMSG_SUSPEND);
 	if (error) {
-		pr_err("PM: Some devices failed to suspend, or early wake event detected\n");
+		printk(KERN_ERR "PM: Some devices failed to suspend\n");
 		goto Recover_platform;
 	}
 	suspend_test_finish("suspend devices");

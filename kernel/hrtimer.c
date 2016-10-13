@@ -44,9 +44,7 @@
 #include <linux/err.h>
 #include <linux/debugobjects.h>
 #include <linux/sched.h>
-#include <linux/sched/sysctl.h>
 #include <linux/timer.h>
-#include <linux/freezer.h>
 
 #include <asm/uaccess.h>
 
@@ -218,7 +216,7 @@ again:
 		 * completed. There is no conflict as we hold the lock until
 		 * the timer is enqueued.
 		 */
-		if (unlikely(hrtimer_callback_running_relaxed(timer)))
+		if (unlikely(hrtimer_callback_running(timer)))
 			return base;
 
 		/* See the comment in lock_timer_base() */
@@ -226,13 +224,10 @@ again:
 		raw_spin_unlock(&base->cpu_base->lock);
 		raw_spin_lock(&new_base->cpu_base->lock);
 
-		this_cpu = smp_processor_id();
-
-		if (cpu != this_cpu && (hrtimer_check_target(timer, new_base)
-			|| !cpu_online(cpu))) {
+		if (cpu != this_cpu && hrtimer_check_target(timer, new_base)) {
+			cpu = this_cpu;
 			raw_spin_unlock(&new_base->cpu_base->lock);
 			raw_spin_lock(&base->cpu_base->lock);
-			cpu = smp_processor_id();
 			timer->base = base;
 			goto again;
 		}
@@ -597,7 +592,7 @@ static int hrtimer_reprogram(struct hrtimer *timer,
 	 * reprogramming is handled either by the softirq, which called the
 	 * callback or at the end of the hrtimer_interrupt.
 	 */
-	if (hrtimer_callback_running_relaxed(timer))
+	if (hrtimer_callback_running(timer))
 		return 0;
 
 	/*
@@ -1063,7 +1058,7 @@ int hrtimer_try_to_cancel(struct hrtimer *timer)
 
 	base = lock_hrtimer_base(timer, &flags);
 
-	if (!hrtimer_callback_running_relaxed(timer))
+	if (!hrtimer_callback_running(timer))
 		ret = remove_hrtimer(timer, base);
 
 	unlock_hrtimer_base(timer, &flags);
@@ -1528,7 +1523,7 @@ static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mod
 			t->task = NULL;
 
 		if (likely(t->task))
-			freezable_schedule();
+			schedule();
 
 		hrtimer_cancel(&t->timer);
 		mode = HRTIMER_MODE_ABS;
@@ -1664,7 +1659,7 @@ static void migrate_hrtimer_list(struct hrtimer_clock_base *old_base,
 
 	while ((node = timerqueue_getnext(&old_base->active))) {
 		timer = container_of(node, struct hrtimer, node);
-		BUG_ON(hrtimer_callback_running_relaxed(timer));
+		BUG_ON(hrtimer_callback_running(timer));
 		debug_deactivate(timer);
 
 		/*

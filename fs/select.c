@@ -26,7 +26,6 @@
 #include <linux/fs.h>
 #include <linux/rcupdate.h>
 #include <linux/hrtimer.h>
-#include <linux/freezer.h>
 
 #include <asm/uaccess.h>
 
@@ -237,8 +236,7 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
 
 	set_current_state(state);
 	if (!pwq->triggered)
-		rc = freezable_schedule_hrtimeout_range(expires, slack,
-							HRTIMER_MODE_ABS);
+		rc = schedule_hrtimeout_range(expires, slack, HRTIMER_MODE_ABS);
 	__set_current_state(TASK_RUNNING);
 
 	/*
@@ -616,6 +614,7 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 	return ret;
 }
 
+#ifdef HAVE_SET_RESTORE_SIGMASK
 static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
 		       fd_set __user *exp, struct timespec __user *tsp,
 		       const sigset_t __user *sigmask, size_t sigsetsize)
@@ -687,6 +686,7 @@ SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
 
 	return do_pselect(n, inp, outp, exp, tsp, up, sigsetsize);
 }
+#endif /* HAVE_SET_RESTORE_SIGMASK */
 
 #ifdef __ARCH_WANT_SYS_OLD_SELECT
 struct sel_arg_struct {
@@ -941,6 +941,7 @@ SYSCALL_DEFINE3(poll, struct pollfd __user *, ufds, unsigned int, nfds,
 	return ret;
 }
 
+#ifdef HAVE_SET_RESTORE_SIGMASK
 SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 		struct timespec __user *, tsp, const sigset_t __user *, sigmask,
 		size_t, sigsetsize)
@@ -991,3 +992,4 @@ SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 
 	return ret;
 }
+#endif /* HAVE_SET_RESTORE_SIGMASK */

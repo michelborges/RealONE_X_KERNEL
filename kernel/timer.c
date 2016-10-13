@@ -39,7 +39,6 @@
 #include <linux/kallsyms.h>
 #include <linux/irq_work.h>
 #include <linux/sched.h>
-#include <linux/sched/sysctl.h>
 #include <linux/slab.h>
 
 #include <asm/uaccess.h>
@@ -813,7 +812,7 @@ unsigned long apply_slack(struct timer_list *timer, unsigned long expires)
 	if (mask == 0)
 		return expires;
 
-	bit = __fls(mask);
+	bit = find_last_bit(&mask, BITS_PER_LONG);
 
 	mask = (1 << bit) - 1;
 

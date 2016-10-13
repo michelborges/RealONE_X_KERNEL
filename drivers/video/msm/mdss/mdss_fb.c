@@ -1956,9 +1956,7 @@ static int mdss_fb_release_all(struct fb_info *info, bool release_all)
 		pr_warn("fb%d ioctl could not finish. waited 1 sec.\n",
 			mfd->index);
 
-	/* wait only for the last release */
-	if (release_all || (mfd->ref_cnt == 1))
-		mdss_fb_pan_idle(mfd);
+	mdss_fb_pan_idle(mfd);
 
 	pr_debug("release_all = %s\n", release_all ? "true" : "false");
 
@@ -2455,9 +2453,9 @@ static int __mdss_fb_display_thread(void *data)
 				mfd->index);
 
 	while (1) {
-		while (wait_event_interruptible(mfd->commit_wait_q,
+		wait_event(mfd->commit_wait_q,
 				(atomic_read(&mfd->commits_pending) ||
-				kthread_should_stop())) != 0);
+				 kthread_should_stop()));
 
 		if (kthread_should_stop())
 			break;
