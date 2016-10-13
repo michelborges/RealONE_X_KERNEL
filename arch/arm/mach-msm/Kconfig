@@ -3169,14 +3169,6 @@ config MMI_MSM_CLOCK
 	  Provides capability for reading an OF DT node to override Clock
 	  specific to MMI product on MSM chip families.
 
-config MSM_ZEN_DECISION
-	bool "Zen Decision: MSM Userspace Handler"
-	depends on SMP && FB
-	default n
-	help
-	  MSM/Qcomm devices have multiple userspace applications that handle
-	  CPU hotplugging and frequency operations.
-
 config MSM_HOTPLUG
 	bool "MSM hotplug driver"
 	depends on HOTPLUG_CPU
