@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -19,13 +19,23 @@
 #include <linux/io.h>
 #include <linux/ftrace.h>
 #include <linux/msm_adreno_devfreq.h>
+<<<<<<< HEAD
 #include <linux/state_notifier.h>
+=======
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+static struct notifier_block adreno_tz_state_notif;
+#endif
+>>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 #include <mach/scm.h>
 #include "governor.h"
 #ifdef CONFIG_ADRENO_IDLER
 #include "adreno_idler.h"
 #endif
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 static DEFINE_SPINLOCK(tz_lock);
 
 /*
@@ -60,8 +70,13 @@ static DEFINE_SPINLOCK(tz_lock);
 
 #define TAG "msm_adreno_tz: "
 
+<<<<<<< HEAD
 /* Boolean to detect if pm has entered suspend mode */
 static bool suspended;
+=======
+/* Boolean to detect if panel has gone off */
+static bool power_suspended = false;
+>>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 
 /* Trap into the TrustZone, and call funcs there. */
 static int __secure_tz_entry2(u32 cmd, u32 val1, u32 val2)
@@ -98,10 +113,31 @@ static void _update_cutoff(struct devfreq_msm_adreno_tz_data *priv,
 	}
 }
 
+<<<<<<< HEAD
 #ifdef CONFIG_ADRENO_IDLER
 extern int adreno_idler(struct devfreq_dev_status stats, struct devfreq *devfreq,
 		 unsigned long *freq);
 #endif
+=======
+#ifdef CONFIG_SIMPLE_GPU_ALGORITHM
+extern int simple_gpu_active;
+extern int simple_gpu_algorithm(int level,
+				struct devfreq_msm_adreno_tz_data *priv);
+#endif
+
+#ifdef CONFIG_ADRENO_IDLER
+
+extern int adreno_idler(struct devfreq_dev_status stats, struct devfreq *devfreq,
+	 	 unsigned long *freq);
+#endif
+
+#ifdef CONFIG_SIMPLE_GPU_ALGORITHM
+extern int simple_gpu_active;
+extern int simple_gpu_algorithm(int level,
+				struct devfreq_msm_adreno_tz_data *priv);
+#endif
+
+>>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 				u32 *flag)
 {
@@ -139,14 +175,22 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 	 * Force to use & record as min freq when system has
 	 * entered pm-suspend or screen-off state.
 	 */
+<<<<<<< HEAD
 	if (suspended || state_suspended) {
+=======
+	if (power_suspended) {
+>>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 		*freq = devfreq->profile->freq_table[devfreq->profile->max_state - 1];
 		return 0;
 	}
 
 #ifdef CONFIG_ADRENO_IDLER
+<<<<<<< HEAD
 	if (adreno_idler_active &&
 			adreno_idler(stats, devfreq, freq)) {
+=======
+	if (adreno_idler(stats, devfreq, freq)) {
+>>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 		/* adreno_idler has asked to bail out now */
 		return 0;
 	}
@@ -164,8 +208,7 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 	/*
 	 * Do not waste CPU cycles running this algorithm if
 	 * the GPU just started, or if less than FLOOR time
-	 * has passed since the last run or the gpu hasn't been
-	 * busier than MIN_BUSY.
+	 * has passed since the last run.
 	 */
 	if ((stats.total_time == 0) ||
 		(priv->bin.total_time < FLOOR) ||
@@ -199,10 +242,20 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq,
 		busy_bin = 0;
 		frame_flag = 0;
 	} else {
+#ifdef CONFIG_SIMPLE_GPU_ALGORITHM
+		if (simple_gpu_active != 0)
+			val = simple_gpu_algorithm(level, priv);
+		else
+			val = __secure_tz_entry3(TZ_UPDATE_ID,
+					level,
+					priv->bin.total_time,
+					priv->bin.busy_time);
+#else
 		val = __secure_tz_entry3(TZ_UPDATE_ID,
 				level,
 				priv->bin.total_time,
 				priv->bin.busy_time);
+#endif
 	}
 	priv->bin.total_time = 0;
 	priv->bin.busy_time = 0;
@@ -362,6 +415,7 @@ static int tz_suspend(struct devfreq *devfreq)
 	priv->bus.total_time = 0;
 	priv->bus.gpu_time = 0;
 	priv->bus.ram_time = 0;
+
 	return 0;
 }
 
@@ -403,8 +457,34 @@ static struct devfreq_governor msm_adreno_tz = {
 	.event_handler = tz_handler,
 };
 
+#ifdef CONFIG_STATE_NOTIFIER
+static int state_notifier_callback(struct notifier_block *this,
+				unsigned long event, void *data)
+{
+	switch (event) {
+		case STATE_NOTIFIER_ACTIVE:
+			power_suspended = false;
+			break;
+		case STATE_NOTIFIER_SUSPEND:
+			power_suspended = true;
+			break;
+		default:
+			break;
+	}
+
+	return NOTIFY_OK;
+}
+
+#endif
+
 static int __init msm_adreno_tz_init(void)
 {
+#ifdef CONFIG_STATE_NOTIFIER
+	adreno_tz_state_notif.notifier_call = state_notifier_callback;
+	if (state_register_client(&adreno_tz_state_notif))
+		pr_err("%s: Failed to register State notifier callback\n",
+			__func__);
+#endif
 	return devfreq_add_governor(&msm_adreno_tz);
 }
 subsys_initcall(msm_adreno_tz_init);
@@ -412,6 +492,11 @@ subsys_initcall(msm_adreno_tz_init);
 static void __exit msm_adreno_tz_exit(void)
 {
 	int ret;
+
+#ifdef CONFIG_STATE_NOTIFIER
+	state_unregister_client(&adreno_tz_state_notif);
+	adreno_tz_state_notif.notifier_call = NULL;
+#endif
 	ret = devfreq_remove_governor(&msm_adreno_tz);
 	if (ret)
 		pr_err(TAG "failed to remove governor %d\n", ret);
