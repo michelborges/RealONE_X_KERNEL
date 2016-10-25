@@ -1,5 +1,4 @@
 /* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
- * Copyright (c) 2011-2015, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -101,7 +100,6 @@ static uint32_t bam_dmux_write_cpy_cnt;
 static uint32_t bam_dmux_write_cpy_bytes;
 static uint32_t bam_dmux_tx_sps_failure_cnt;
 static uint32_t bam_dmux_tx_stall_cnt;
-static uint32_t bam_dmux_ratelimit;
 static atomic_t bam_dmux_ack_out_cnt = ATOMIC_INIT(0);
 static atomic_t bam_dmux_ack_in_cnt = ATOMIC_INIT(0);
 static atomic_t bam_dmux_a2_pwr_cntl_in_cnt = ATOMIC_INIT(0);
@@ -1541,7 +1539,6 @@ static inline void ul_powerdown_finish(void)
 		unvote_dfab();
 		complete_all(&dfab_unvote_completion);
 		wait_for_dfab = 0;
-		bam_dmux_ratelimit = 0;
 	}
 }
 
@@ -1611,7 +1608,7 @@ static void ul_timeout(struct work_struct *work)
 		return;
 	ret = write_trylock_irqsave(&ul_wakeup_lock, flags);
 	if (!ret) { /* failed to grab lock, reschedule and bail */
-		queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+		schedule_delayed_work(&ul_timeout_work,
 				msecs_to_jiffies(ul_timeout_delay));
 		return;
 	}
@@ -1623,13 +1620,8 @@ static void ul_timeout(struct work_struct *work)
 
 				info = list_first_entry(&bam_tx_pool,
 						struct tx_pkt_info, list_node);
-				if (!bam_dmux_ratelimit) {
-					DMUX_LOG_KERR
-					    ("%s: UL delayed ts=%u.%09lu\n",
-					     __func__, info->ts_sec,
-					     info->ts_nsec);
-					bam_dmux_ratelimit++;
-				}
+				DMUX_LOG_KERR("%s: UL delayed ts=%u.%09lu\n",
+					__func__, info->ts_sec, info->ts_nsec);
 				DBG_INC_TX_STALL_CNT();
 				ul_packet_written = 1;
 			}
@@ -1640,7 +1632,7 @@ static void ul_timeout(struct work_struct *work)
 			BAM_DMUX_LOG("%s: pkt written %d\n",
 				__func__, ul_packet_written);
 			ul_packet_written = 0;
-			queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+			schedule_delayed_work(&ul_timeout_work,
 					msecs_to_jiffies(ul_timeout_delay));
 		} else {
 			ul_powerdown();
@@ -1721,12 +1713,12 @@ static void ul_wakeup(void)
 		}
 		if (wait_for_dfab) {
 			ret = wait_for_completion_timeout(
-					&dfab_unvote_completion, msecs_to_jiffies(1000));
+					&dfab_unvote_completion, HZ);
 			BUG_ON(ret == 0);
 		}
 		if (likely(do_vote_dfab))
 			vote_dfab();
-		queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+		schedule_delayed_work(&ul_timeout_work,
 				msecs_to_jiffies(ul_timeout_delay));
 		bam_is_connected = 1;
 		mutex_unlock(&wakeup_lock);
@@ -1771,7 +1763,7 @@ static void ul_wakeup(void)
 
 	bam_is_connected = 1;
 	BAM_DMUX_LOG("%s complete\n", __func__);
-	queue_delayed_work(system_power_efficient_wq, &ul_timeout_work,
+	schedule_delayed_work(&ul_timeout_work,
 				msecs_to_jiffies(ul_timeout_delay));
 	mutex_unlock(&wakeup_lock);
 }

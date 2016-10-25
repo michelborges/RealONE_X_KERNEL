@@ -11,14 +11,6 @@ obj-$(CONFIG_CPU_FREQ_GOV_USERSPACE)	+= cpufreq_userspace.o
 obj-$(CONFIG_CPU_FREQ_GOV_ONDEMAND)	+= cpufreq_ondemand.o
 obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE)	+= cpufreq_conservative.o
 obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVE)	+= cpufreq_interactive.o
-obj-$(CONFIG_CPU_FREQ_GOV_ZZMOOVE)	+= cpufreq_zzmoove.o
-obj-$(CONFIG_CPU_FREQ_GOV_DARKNESS)	  += cpufreq_darkness.o
-obj-$(CONFIG_CPU_FREQ_GOV_BIOSHOCK)	+= cpufreq_bioshock.o
-obj-$(CONFIG_CPU_FREQ_GOV_INTELLIACTIVE)+= cpufreq_intelliactive.o
-obj-$(CONFIG_CPU_FREQ_GOV_ONDEMANDPLUS)+= cpufreq_ondemandplus.o
-obj-$(CONFIG_CPU_FREQ_GOV_INTELLIMM)   	+= cpufreq_intellimm.o
-obj-$(CONFIG_CPU_FREQ_GOV_SMARTMAX)     += cpufreq_smartmax.o
-obj-$(CONFIG_CPU_FREQ_GOV_NIGHTMARE)    += cpufreq_nightmare.o
 
 # CPUfreq cross-arch helpers
 obj-$(CONFIG_CPU_FREQ_TABLE)		+= freq_table.o
@@ -58,9 +50,6 @@ obj-$(CONFIG_ARM_EXYNOS4210_CPUFREQ)	+= exynos4210-cpufreq.o
 obj-$(CONFIG_ARM_EXYNOS4X12_CPUFREQ)	+= exynos4x12-cpufreq.o
 obj-$(CONFIG_ARM_EXYNOS5250_CPUFREQ)	+= exynos5250-cpufreq.o
 obj-$(CONFIG_ARM_OMAP2PLUS_CPUFREQ)     += omap-cpufreq.o
-obj-$(CONFIG_ARM_TEGRA20_CPUFREQ)	+= tegra20-cpufreq.o
-obj-$(CONFIG_ARM_TEGRA124_CPUFREQ)      += tegra124-cpufreq.o
-obj-$(CONFIG_ARM_TEGRA210_CPUFREQ)      += tegra210-cpufreq.o
 
 ##################################################################################
 # PowerPC platform drivers

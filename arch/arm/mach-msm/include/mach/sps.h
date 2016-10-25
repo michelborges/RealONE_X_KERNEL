@@ -111,10 +111,7 @@
 #define SPS_BAM_CANCEL_WB           (1UL << 6)
 /* Hold memory for BAM DMUX */
 #define SPS_BAM_HOLD_MEM            (1UL << 8)
-<<<<<<< HEAD
 
-=======
->>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 
 /* BAM device management flags */
 

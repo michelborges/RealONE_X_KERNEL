@@ -1886,22 +1886,6 @@ config MSM_DALRPC_TEST
 
 if CPU_FREQ_MSM
 
-config BRICKED_HOTPLUG
-	bool "Enable kernel based mpdecision"
-	depends on MSM_RUN_QUEUE_STATS
-	default y
-	help
-	  This enables kernel based multi core control.
-	  (up/down hotplug based on load)
-
-config MSM_HOTPLUG
-	bool "MSM hotplug driver"
-	depends on HOTPLUG_CPU
-	default y
-	help
-	  The MSM hotplug driver controls on-/offlining of additional cores based
-	  on current cpu load.
-
 config MSM_CPU_FREQ_SET_MIN_MAX
 	bool "Set Min/Max CPU frequencies."
 	default n
@@ -3060,7 +3044,6 @@ config MSM_CPU_PWRCTL
 	  stand alone power collapse operation. Selecting this option
 	  ensures that they are always off.
 
-
 config MSM_UARTDM_Core_v14
 	bool "Use MSM BLSP based HSUART Core v1.4"
 	depends on SERIAL_MSM_HS
@@ -3213,18 +3196,6 @@ config PM_DEBUG_WAKEUP
 	depends on PM_DEBUG
     default n
     bool "Report wakeup source in a uevent"
-
-config STATE_HELPER
-        bool "State Helper"
-	depends on STATE_NOTIFIER
-	default y
-
-config MSM_SLEEPER
-	bool "Limit max frequency and shut off cores while screen is off"
-	default y
-	help
-	  Limit max frequency and shut off cores while screen is off 
-
 
 endif
 

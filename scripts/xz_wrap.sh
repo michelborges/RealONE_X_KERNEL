@@ -10,7 +10,7 @@
 #
 
 BCJ=
-LZMA2OPTS=lp=2,lc=2,nice=273,depth=65
+LZMA2OPTS=
 
 case $SRCARCH in
 	x86)            BCJ=--x86 ;;
@@ -20,4 +20,4 @@ case $SRCARCH in
 	sparc)          BCJ=--sparc ;;
 esac
 
-exec xz --check=crc32 $BCJ --lzma2=$LZMA2OPTS,dict=8MiB
+exec xz --check=crc32 $BCJ --lzma2=$LZMA2OPTS,dict=32MiB

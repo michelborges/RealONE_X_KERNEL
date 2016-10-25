@@ -42,7 +42,6 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 
-#include <linux/moduleparam.h>
 #include <linux/uaccess.h>
 #include <linux/export.h>
 
@@ -101,97 +100,12 @@ static struct pm_qos_object network_throughput_pm_qos = {
 	.name = "network_throughput",
 };
 
-static BLOCKING_NOTIFIER_HEAD(min_online_cpus_notifier);
-static struct pm_qos_constraints min_online_cpus_constraints = {
-	.list = PLIST_HEAD_INIT(min_online_cpus_constraints.list),
-	.target_value = PM_QOS_MIN_ONLINE_CPUS_DEFAULT_VALUE,
-	.default_value = PM_QOS_MIN_ONLINE_CPUS_DEFAULT_VALUE,
-	.type = PM_QOS_MAX,
-	.notifiers = &min_online_cpus_notifier,
-};
-static struct pm_qos_object min_online_cpus_pm_qos = {
-	.constraints = &min_online_cpus_constraints,
-	.name = "min_online_cpus",
-};
-
-
-static BLOCKING_NOTIFIER_HEAD(max_online_cpus_notifier);
-static struct pm_qos_constraints max_online_cpus_constraints = {
-	.list = PLIST_HEAD_INIT(max_online_cpus_constraints.list),
-	.target_value = PM_QOS_MAX_ONLINE_CPUS_DEFAULT_VALUE,
-	.default_value = PM_QOS_MAX_ONLINE_CPUS_DEFAULT_VALUE,
-	.type = PM_QOS_MIN,
-	.notifiers = &max_online_cpus_notifier,
-};
-static struct pm_qos_object max_online_cpus_pm_qos = {
-	.constraints = &max_online_cpus_constraints,
-	.name = "max_online_cpus",
-};
-
-static BLOCKING_NOTIFIER_HEAD(cpu_freq_min_notifier);
-static struct pm_qos_constraints cpu_freq_min_constraints = {
-	.list = PLIST_HEAD_INIT(cpu_freq_min_constraints.list),
-	.target_value = PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE,
-	.default_value = PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE,
-	.type = PM_QOS_MAX,
-	.notifiers = &cpu_freq_min_notifier,
-};
-static struct pm_qos_object cpu_freq_min_pm_qos = {
-	.constraints = &cpu_freq_min_constraints,
-	.name = "cpu_freq_min",
-};
-
-
-static BLOCKING_NOTIFIER_HEAD(cpu_freq_max_notifier);
-static struct pm_qos_constraints cpu_freq_max_constraints = {
-	.list = PLIST_HEAD_INIT(cpu_freq_max_constraints.list),
-	.target_value = PM_QOS_CPU_FREQ_MAX_DEFAULT_VALUE,
-	.default_value = PM_QOS_CPU_FREQ_MAX_DEFAULT_VALUE,
-	.type = PM_QOS_MIN,
-	.notifiers = &cpu_freq_max_notifier,
-};
-static struct pm_qos_object cpu_freq_max_pm_qos = {
-	.constraints = &cpu_freq_max_constraints,
-	.name = "cpu_freq_max",
-};
-
-static BLOCKING_NOTIFIER_HEAD(gpu_freq_min_notifier);
-static struct pm_qos_constraints gpu_freq_min_constraints = {
-	.list = PLIST_HEAD_INIT(gpu_freq_min_constraints.list),
-	.target_value = PM_QOS_GPU_FREQ_MIN_DEFAULT_VALUE,
-	.default_value = PM_QOS_GPU_FREQ_MIN_DEFAULT_VALUE,
-	.type = PM_QOS_MAX,
-	.notifiers = &gpu_freq_min_notifier,
-};
-static struct pm_qos_object gpu_freq_min_pm_qos = {
-	.constraints = &gpu_freq_min_constraints,
-	.name = "gpu_freq_min",
-};
-
-static BLOCKING_NOTIFIER_HEAD(gpu_freq_max_notifier);
-static struct pm_qos_constraints gpu_freq_max_constraints = {
-	.list = PLIST_HEAD_INIT(gpu_freq_max_constraints.list),
-	.target_value = PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE,
-	.default_value = PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE,
-	.type = PM_QOS_MIN,
-	.notifiers = &gpu_freq_max_notifier,
-};
-static struct pm_qos_object gpu_freq_max_pm_qos = {
-	.constraints = &gpu_freq_max_constraints,
-	.name = "gpu_freq_max",
-};
 
 static struct pm_qos_object *pm_qos_array[] = {
 	&null_pm_qos,
 	&cpu_dma_pm_qos,
 	&network_lat_pm_qos,
-	&network_throughput_pm_qos,
-	&min_online_cpus_pm_qos,
-	&max_online_cpus_pm_qos,
-	&cpu_freq_min_pm_qos,
-	&cpu_freq_max_pm_qos,
-	&gpu_freq_min_pm_qos,
-	&gpu_freq_max_pm_qos
+	&network_throughput_pm_qos
 };
 
 static ssize_t pm_qos_power_write(struct file *filp, const char __user *buf,
@@ -208,8 +122,6 @@ static const struct file_operations pm_qos_power_fops = {
 	.release = pm_qos_power_release,
 	.llseek = noop_llseek,
 };
-
-static bool pm_qos_enabled __read_mostly = true;
 
 /* unlocked internal variant */
 static inline int pm_qos_get_value(struct pm_qos_constraints *c)
@@ -284,12 +196,8 @@ int pm_qos_update_target(struct pm_qos_constraints *c, struct plist_node *node,
 		;
 	}
 
-	if (pm_qos_enabled) {
-		curr_value = pm_qos_get_value(c);
-		pm_qos_set_value(c, curr_value);
-	} else {
-		curr_value = c->default_value;
-	}
+	curr_value = pm_qos_get_value(c);
+	pm_qos_set_value(c, curr_value);
 
 	spin_unlock_irqrestore(&pm_qos_lock, flags);
 
@@ -321,15 +229,6 @@ int pm_qos_request_active(struct pm_qos_request *req)
 }
 EXPORT_SYMBOL_GPL(pm_qos_request_active);
 
-static void __pm_qos_update_request(struct pm_qos_request *req,
-			   s32 new_value)
-{
-	if (new_value != req->node.prio)
-		pm_qos_update_target(
-			pm_qos_array[req->pm_qos_class]->constraints,
-			&req->node, PM_QOS_UPDATE_REQ, new_value);
-}
-
 /**
  * pm_qos_work_fn - the timeout handler of pm_qos_update_request_timeout
  * @work: work struct for the delayed work (timeout)
@@ -338,6 +237,7 @@ static void __pm_qos_update_request(struct pm_qos_request *req,
  */
 static void pm_qos_work_fn(struct work_struct *work)
 {
+	s32 new_value = PM_QOS_DEFAULT_VALUE;
 	struct pm_qos_request *req = container_of(to_delayed_work(work),
 						  struct pm_qos_request,
 						  work);
@@ -345,7 +245,10 @@ static void pm_qos_work_fn(struct work_struct *work)
 	if (!req || !pm_qos_request_active(req))
 		return;
 
-	__pm_qos_update_request(req, PM_QOS_DEFAULT_VALUE);
+	if (new_value != req->node.prio)
+		pm_qos_update_target(
+			pm_qos_array[req->pm_qos_class]->constraints,
+			&req->node, PM_QOS_UPDATE_REQ, new_value);
 }
 
 /**
@@ -406,8 +309,6 @@ void pm_qos_update_request(struct pm_qos_request *req,
 		pm_qos_update_target(
 			pm_qos_array[req->pm_qos_class]->constraints,
 			&req->node, PM_QOS_UPDATE_REQ, new_value);
-
-	__pm_qos_update_request(req, new_value);
 }
 EXPORT_SYMBOL_GPL(pm_qos_update_request);
 
@@ -439,8 +340,6 @@ void pm_qos_update_request_timeout(struct pm_qos_request *req, s32 new_value,
 	schedule_delayed_work(&req->work, usecs_to_jiffies(timeout_us));
 }
 
-EXPORT_SYMBOL_GPL(pm_qos_update_request_timeout);
-
 /**
  * pm_qos_remove_request - modifies an existing qos request
  * @req: handle to request list element
@@ -469,59 +368,6 @@ void pm_qos_remove_request(struct pm_qos_request *req)
 	memset(req, 0, sizeof(*req));
 }
 EXPORT_SYMBOL_GPL(pm_qos_remove_request);
-
-static int pm_qos_enabled_set(const char *arg, const struct kernel_param *kp)
-{
-	unsigned long flags;
-	bool old;
-	s32 prev[PM_QOS_NUM_CLASSES], curr[PM_QOS_NUM_CLASSES];
-	int ret, i;
-
-	old = pm_qos_enabled;
-	ret = param_set_bool(arg, kp);
-	if (ret != 0) {
-		pr_warn("%s: cannot set PM QoS enable to %s\n",
-			__FUNCTION__, arg);
-		return ret;
-	}
-	spin_lock_irqsave(&pm_qos_lock, flags);
-	for (i = 1; i < PM_QOS_NUM_CLASSES; i++)
-		prev[i] = pm_qos_read_value(pm_qos_array[i]->constraints);
-	if (old && !pm_qos_enabled) {
-		/* got disabled */
-		for (i = 1; i < PM_QOS_NUM_CLASSES; i++) {
-			curr[i] = pm_qos_array[i]->constraints->default_value;
-			pm_qos_set_value(pm_qos_array[i]->constraints, curr[i]);
-		}
-	} else if (!old && pm_qos_enabled) {
-		/* got enabled */
-		for (i = 1; i < PM_QOS_NUM_CLASSES; i++) {
-			curr[i] = pm_qos_get_value(pm_qos_array[i]->constraints);
-			pm_qos_set_value(pm_qos_array[i]->constraints, curr[i]);
-		}
-	}
-	spin_unlock_irqrestore(&pm_qos_lock, flags);
-	for (i = 1; i < PM_QOS_NUM_CLASSES; i++)
-		if (prev[i] != curr[i])
-			blocking_notifier_call_chain(
-				pm_qos_array[i]->constraints->notifiers,
-				(unsigned long)curr[i],
-				NULL);
-
-	return ret;
-}
-
-static int pm_qos_enabled_get(char *buffer, const struct kernel_param *kp)
-{
-	return param_get_bool(buffer, kp);
-}
-
-static struct kernel_param_ops pm_qos_enabled_ops = {
-	.set = pm_qos_enabled_set,
-	.get = pm_qos_enabled_get,
-};
-
-module_param_cb(enable, &pm_qos_enabled_ops, &pm_qos_enabled, 0644);
 
 /**
  * pm_qos_add_notifier - sets notification entry for changes to target value

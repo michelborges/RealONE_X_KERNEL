@@ -13,11 +13,6 @@
 #include <linux/smp.h>
 #include <linux/cpu.h>
 #include <asm/relaxed.h>
-<<<<<<< HEAD
-=======
-
-#include "smpboot.h"
->>>>>>> 3428d2412d0dffc38d0c688ac557fe70846d8daf
 
 #ifdef CONFIG_USE_GENERIC_SMP_HELPERS
 static struct {
@@ -708,8 +703,6 @@ void __init setup_nr_cpu_ids(void)
 void __init smp_init(void)
 {
 	unsigned int cpu;
-
-	idle_threads_init();
 
 	/* FIXME: This should be done in userspace --RR */
 	for_each_present_cpu(cpu) {
