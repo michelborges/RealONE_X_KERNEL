@@ -5,8 +5,6 @@
  *
  *  Copyright (C) 1991-2002  Linus Torvalds
  *
- * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
- * 
  *  1996-12-23  Modified by Dave Grothe to fix bugs in semaphores and
  *		make semaphores SMP safe
  *  1998-11-19	Implemented schedule_timeout() and related stuff
@@ -80,7 +78,6 @@
 #include <asm/tlb.h>
 #include <asm/irq_regs.h>
 #include <asm/mutex.h>
-#include <asm/relaxed.h>
 #ifdef CONFIG_PARAVIRT
 #include <asm/paravirt.h>
 #endif
@@ -119,10 +116,6 @@ void start_bandwidth_timer(struct hrtimer *period_timer, ktime_t period)
 
 DEFINE_MUTEX(sched_domains_mutex);
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
-
-#ifdef CONFIG_INTELLI_HOTPLUG
-DEFINE_PER_CPU_SHARED_ALIGNED(struct nr_stats_s, runqueue_stats);
-#endif
 
 static void update_rq_clock_task(struct rq *rq, s64 delta);
 
@@ -1205,10 +1198,9 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
 		 * is actually now running somewhere else!
 		 */
 		while (task_running(rq, p)) {
-			if (match_state && unlikely(cpu_relaxed_read_long
-			    (&(p->state)) != match_state))
+			if (match_state && unlikely(p->state != match_state))
 				return 0;
-			cpu_read_relax();
+			cpu_relax();
 		}
 
 		/*
@@ -1650,7 +1642,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 		if (ttwu_activate_remote(p, wake_flags))
 			goto stat;
 #else
-		cpu_read_relax();
+		cpu_relax();
 #endif
 	}
 	/*
@@ -2202,61 +2194,6 @@ unsigned long nr_iowait(void)
 
 	return sum;
 }
-
-#ifdef CONFIG_INTELLI_HOTPLUG
-unsigned long avg_nr_running(void)
-{
-	unsigned long i, sum = 0;
-	unsigned int seqcnt, ave_nr_running;
-
-	for_each_online_cpu(i) {
-		struct nr_stats_s *stats = &per_cpu(runqueue_stats, i);
-		struct rq *q = cpu_rq(i);
-
-		/*
-		 * Update average to avoid reading stalled value if there were
-		 * no run-queue changes for a long time. On the other hand if
-		 * the changes are happening right now, just read current value
-		 * directly.
-		 */
-		seqcnt = read_seqcount_begin(&stats->ave_seqcnt);
-		ave_nr_running = do_avg_nr_running(q);
-		if (read_seqcount_retry(&stats->ave_seqcnt, seqcnt)) {
-			read_seqcount_begin(&stats->ave_seqcnt);
-			ave_nr_running = stats->ave_nr_running;
-		}
-
-		sum += ave_nr_running;
-	}
-
-	return sum;
-}
-EXPORT_SYMBOL(avg_nr_running);
-
-unsigned long avg_cpu_nr_running(unsigned int cpu)
-{
-	unsigned int seqcnt, ave_nr_running;
-
-	struct nr_stats_s *stats = &per_cpu(runqueue_stats, cpu);
-	struct rq *q = cpu_rq(cpu);
-
-	/*
-	 * Update average to avoid reading stalled value if there were
-	 * no run-queue changes for a long time. On the other hand if
-	 * the changes are happening right now, just read current value
-	 * directly.
-	 */
-	seqcnt = read_seqcount_begin(&stats->ave_seqcnt);
-	ave_nr_running = do_avg_nr_running(q);
-	if (read_seqcount_retry(&stats->ave_seqcnt, seqcnt)) {
-		read_seqcount_begin(&stats->ave_seqcnt);
-		ave_nr_running = stats->ave_nr_running;
-	}
-
-	return ave_nr_running;
-}
-EXPORT_SYMBOL(avg_cpu_nr_running);
-#endif
 
 unsigned long nr_iowait_cpu(int cpu)
 {
@@ -4266,24 +4203,6 @@ int idle_cpu(int cpu)
 #endif
 
 	return 1;
-}
-
-int idle_cpu_relaxed(int cpu)
-{
-      struct rq *rq = cpu_rq(cpu);
-
-      if (cpu_relaxed_read_long(&rq->curr) != rq->idle)
-             return 0;
-
-      if (cpu_relaxed_read_long(&rq->nr_running))
-             return 0;
-
-#ifdef CONFIG_SMP
-      if (!llist_empty_relaxed(&rq->wake_list))
-             return 0;
-#endif
-
-             return 1;
 }
 
 /**
@@ -6310,7 +6229,7 @@ static const struct cpumask *cpu_cpu_mask(int cpu)
 	return cpumask_of_node(cpu_to_node(cpu));
 }
 
-int sched_smt_power_savings = 0, sched_mc_power_savings = 2;
+int sched_smt_power_savings = 0, sched_mc_power_savings = 0;
 
 struct sd_data {
 	struct sched_domain **__percpu sd;

@@ -33,7 +33,7 @@
 
 /*
  * Targeted preemption latency for CPU-bound tasks:
- * (default: 5ms * (1 + ilog(ncpus)), units: nanoseconds)
+ * (default: 6ms * (1 + ilog(ncpus)), units: nanoseconds)
  *
  * NOTE: this latency value is not the same as the concept of
  * 'timeslice length' - timeslices in CFS are of variable length
@@ -43,8 +43,8 @@
  * (to see the precise effective timeslice length of your workload,
  *  run vmstat and monitor the context-switches (cs) field)
  */
-unsigned int sysctl_sched_latency = 5000000ULL;
-unsigned int normalized_sysctl_sched_latency = 5000000ULL;
+unsigned int sysctl_sched_latency = 6000000ULL;
+unsigned int normalized_sysctl_sched_latency = 6000000ULL;
 
 /*
  * The initial- and re-scaling of tunables is configurable
@@ -1842,7 +1842,7 @@ static int runtime_refresh_within(struct cfs_bandwidth *cfs_b, u64 min_expire)
 	u64 remaining;
 
 	/* if the call-back is running a quota refresh is already occurring */
-	if (hrtimer_callback_running_relaxed(refresh_timer))
+	if (hrtimer_callback_running(refresh_timer))
 		return 1;
 
 	/* is a quota refresh about to occur? */
@@ -4644,13 +4644,6 @@ void idle_balance(int this_cpu, struct rq *this_rq)
 	rcu_read_unlock();
 
 	raw_spin_lock(&this_rq->lock);
-
-	/*
-	 * While browsing the domains, we released the rq lock.
-	 * A task could have be enqueued in the meantime
-	 */
-	if (this_rq->nr_running && !pulled_task)
-		return;
 
 	if (!pulled_task || time_after(jiffies, this_rq->next_balance)) {
 		/*

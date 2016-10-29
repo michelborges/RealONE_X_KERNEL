@@ -280,8 +280,6 @@ config ARCH_MSM8974
 	select MSM_RPM_REGULATOR_SMD
 	select ARM_HAS_SG_CHAIN
 	select MSM_RUN_QUEUE_STATS
-	select MSM_HOTPLUG
-	select INTELLI_HOTPLUG
 	select MEMORY_HOLE_CARVEOUT
 	select MSM_RPM_STATS_LOG
 	select QMI_ENCDEC
@@ -1919,12 +1917,6 @@ config MSM_DEVFREQ_CPUBW
 	  agnostic interface to so that some of the devfreq governors can be
 	  shared across SoCs.
 
-config CPU_VOLTAGE_TABLE
-	bool "Enable CPU Voltage Table via sysfs for adjustements"
-	default n
-	help
-	  DTS based kernel User Votlage Control
-
 config MSM_AVS_HW
 	bool "Enable Adaptive Voltage Scaling (AVS)"
 	default n
@@ -3176,21 +3168,6 @@ config MMI_MSM_CLOCK
 	help
 	  Provides capability for reading an OF DT node to override Clock
 	  specific to MMI product on MSM chip families.
-
-config INTELLI_HOTPLUG
-	bool "Intelligient hotplug driver for RQ systems"
-	depends on MSM_RUN_QUEUE_STATS
-	help
-	  This is an intelligient hotplugging system based
-	  on MSM Run Queue statistics. Performance oriented.
-
-config MSM_HOTPLUG
-	bool "MSM hotplug driver"
-	depends on HOTPLUG_CPU
-	default n
-	help
-	  The MSM hotplug driver controls on-/offlining of additional cores based
-	  on current cpu load.
 
 config PM_DEBUG_WAKEUP
 	depends on PM_DEBUG

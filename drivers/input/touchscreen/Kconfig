@@ -1136,11 +1136,6 @@ config TOUCHSCREEN_TOUCHX
           To compile this driver as a module, choose M here: the
           module will be called touchx.
 
-config STATE_NOTIFIER
-        bool "State Notifier"
-	depends on TOUCHSCREEN_ATMEL_MXT_MMI
-	default y
-
 source "drivers/input/touchscreen/gt9xx/Kconfig"
 
 endif
